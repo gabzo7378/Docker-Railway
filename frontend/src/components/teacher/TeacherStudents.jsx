@@ -11,14 +11,17 @@ import {
   TableRow,
   Paper,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import { teachersAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import './teacher-dashboard.css';
 
 const TeacherStudents = () => {
   const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (user?.related_id) {
@@ -29,11 +32,12 @@ const TeacherStudents = () => {
   const loadStudents = async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await teachersAPI.getStudents(user.related_id);
       setStudents(data);
     } catch (err) {
       console.error('Error cargando estudiantes:', err);
-      alert('Error al cargar estudiantes');
+      setError('Error al cargar estudiantes. Por favor, intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -41,46 +45,60 @@ const TeacherStudents = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <Box className="teacher-loading">
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box className="teacher-dashboard">
+      <Typography variant="h4" gutterBottom className="teacher-dashboard-title">
         Mis Estudiantes
       </Typography>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
+      {error && (
+        <Alert severity="error" className="teacher-alert" onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      <TableContainer component={Paper} className="teacher-table-container">
+        <Table className="teacher-table">
+          <TableHead className="teacher-table-head">
             <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>DNI</TableCell>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Apellido</TableCell>
-              <TableCell>Teléfono</TableCell>
-              <TableCell>Apoderado</TableCell>
+              <TableCell className="teacher-table-head-cell">DNI</TableCell>
+              <TableCell className="teacher-table-head-cell">Nombre</TableCell>
+              <TableCell className="teacher-table-head-cell">Apellido</TableCell>
+              <TableCell className="teacher-table-head-cell">Teléfono</TableCell>
+              <TableCell className="teacher-table-head-cell">Apoderado</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {students.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>{student.id}</TableCell>
-                <TableCell>{student.dni}</TableCell>
-                <TableCell>{student.first_name}</TableCell>
-                <TableCell>{student.last_name}</TableCell>
-                <TableCell>{student.phone || '-'}</TableCell>
-                <TableCell>{student.parent_name || '-'}</TableCell>
+              <TableRow key={student.id} className="teacher-table-row">
+                <TableCell className="teacher-table-cell">{student.dni}</TableCell>
+                <TableCell className="teacher-table-cell">
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {student.first_name}
+                  </Typography>
+                </TableCell>
+                <TableCell className="teacher-table-cell">
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {student.last_name}
+                  </Typography>
+                </TableCell>
+                <TableCell className="teacher-table-cell">{student.phone || '-'}</TableCell>
+                <TableCell className="teacher-table-cell">{student.parent_name || '-'}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
         {students.length === 0 && (
-          <Box p={3} textAlign="center">
-            <Typography color="textSecondary">No tienes estudiantes asignados</Typography>
+          <Box className="teacher-empty-state">
+            <Typography className="teacher-empty-state-text">
+              No tienes estudiantes asignados
+            </Typography>
           </Box>
         )}
       </TableContainer>

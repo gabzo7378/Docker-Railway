@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import { teachersAPI, schedulesAPI, coursesAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import './teacher-dashboard.css';
 
 const TeacherAttendance = () => {
   const { user } = useAuth();
@@ -54,7 +55,7 @@ const TeacherAttendance = () => {
         coursesAPI.getAll(),
       ]);
       setStudents(studentsData);
-      
+
       // Obtener horarios de los cursos del profesor
       const allSchedules = [];
       for (const course of coursesData) {
@@ -106,58 +107,63 @@ const TeacherAttendance = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <Box className="teacher-loading">
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box className="teacher-dashboard">
+      <Typography variant="h4" gutterBottom className="teacher-dashboard-title">
         Marcar Asistencias
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+        <Alert severity="error" className="teacher-alert" onClose={() => setError('')}>
           {error}
         </Alert>
       )}
 
       {success && (
-        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
+        <Alert severity="success" className="teacher-alert" onClose={() => setSuccess('')}>
           {success}
         </Alert>
       )}
 
       {/* Lista de horarios */}
-      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+      <Typography className="teacher-section-header">
         Mis Horarios
       </Typography>
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
+      <TableContainer component={Paper} className="teacher-table-container">
+        <Table className="teacher-table">
+          <TableHead className="teacher-table-head">
             <TableRow>
-              <TableCell>Curso</TableCell>
-              <TableCell>Día</TableCell>
-              <TableCell>Hora Inicio</TableCell>
-              <TableCell>Hora Fin</TableCell>
-              <TableCell>Aula</TableCell>
-              <TableCell>Acciones</TableCell>
+              <TableCell className="teacher-table-head-cell">Curso</TableCell>
+              <TableCell className="teacher-table-head-cell">Día</TableCell>
+              <TableCell className="teacher-table-head-cell">Hora Inicio</TableCell>
+              <TableCell className="teacher-table-head-cell">Hora Fin</TableCell>
+              <TableCell className="teacher-table-head-cell">Aula</TableCell>
+              <TableCell className="teacher-table-head-cell">Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {schedules.map((schedule) => (
-              <TableRow key={schedule.id}>
-                <TableCell>{schedule.courseName || '-'}</TableCell>
-                <TableCell>{schedule.day_of_week}</TableCell>
-                <TableCell>{schedule.start_time}</TableCell>
-                <TableCell>{schedule.end_time}</TableCell>
-                <TableCell>{schedule.classroom || '-'}</TableCell>
-                <TableCell>
+              <TableRow key={schedule.id} className="teacher-table-row">
+                <TableCell className="teacher-table-cell">
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {schedule.courseName || '-'}
+                  </Typography>
+                </TableCell>
+                <TableCell className="teacher-table-cell">{schedule.day_of_week}</TableCell>
+                <TableCell className="teacher-table-cell">{schedule.start_time}</TableCell>
+                <TableCell className="teacher-table-cell">{schedule.end_time}</TableCell>
+                <TableCell className="teacher-table-cell">{schedule.classroom || '-'}</TableCell>
+                <TableCell className="teacher-table-cell">
                   <Button
                     size="small"
                     variant="contained"
+                    className="teacher-button teacher-button-primary"
                     onClick={() => {
                       setSelectedSchedule(schedule);
                       setOpenDialog(true);
@@ -171,14 +177,22 @@ const TeacherAttendance = () => {
           </TableBody>
         </Table>
         {schedules.length === 0 && (
-          <Box p={3} textAlign="center">
-            <Typography color="textSecondary">No tienes horarios asignados</Typography>
+          <Box className="teacher-empty-state">
+            <Typography className="teacher-empty-state-text">
+              No tienes horarios asignados
+            </Typography>
           </Box>
         )}
       </TableContainer>
 
       {/* Dialog para marcar asistencia */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        className="teacher-dialog"
+      >
         <DialogTitle>Marcar Asistencia</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
@@ -189,18 +203,21 @@ const TeacherAttendance = () => {
                   value={selectedSchedule.courseName || '-'}
                   InputProps={{ readOnly: true }}
                   fullWidth
+                  className="teacher-input"
                 />
                 <TextField
                   label="Día"
                   value={selectedSchedule.day_of_week}
                   InputProps={{ readOnly: true }}
                   fullWidth
+                  className="teacher-input"
                 />
                 <TextField
                   label="Horario"
                   value={`${selectedSchedule.start_time} - ${selectedSchedule.end_time}`}
                   InputProps={{ readOnly: true }}
                   fullWidth
+                  className="teacher-input"
                 />
               </>
             )}
@@ -210,6 +227,7 @@ const TeacherAttendance = () => {
               fullWidth
               value={selectedStudent || ''}
               onChange={(e) => setSelectedStudent(e.target.value)}
+              className="teacher-input"
             >
               {students.map((student) => (
                 <MenuItem key={student.id} value={student.id}>
@@ -223,6 +241,7 @@ const TeacherAttendance = () => {
               fullWidth
               value={attendanceStatus}
               onChange={(e) => setAttendanceStatus(e.target.value)}
+              className="teacher-input"
             >
               <MenuItem value="presente">Presente</MenuItem>
               <MenuItem value="ausente">Ausente</MenuItem>
@@ -230,8 +249,17 @@ const TeacherAttendance = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
-          <Button onClick={handleMarkAttendance} variant="contained">
+          <Button
+            onClick={() => setOpenDialog(false)}
+            className="teacher-button teacher-button-secondary"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleMarkAttendance}
+            variant="contained"
+            className="teacher-button teacher-button-primary"
+          >
             Guardar
           </Button>
         </DialogActions>

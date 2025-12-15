@@ -14,6 +14,7 @@ import {
 } from '@mui/icons-material';
 import { teachersAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import './teacher-dashboard.css';
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
@@ -40,47 +41,51 @@ const TeacherDashboard = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <Box className="teacher-loading">
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box className="teacher-dashboard">
+      <Typography variant="h4" gutterBottom className="teacher-dashboard-title">
         Dashboard Docente
       </Typography>
-      <Typography variant="body1" color="textSecondary" gutterBottom sx={{ mb: 3 }}>
+      <Typography className="teacher-subtitle">
         Bienvenido, {user?.name || 'Docente'}
       </Typography>
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card className="teacher-stat-card">
             <CardContent>
               <Box display="flex" alignItems="center">
-                <PeopleIcon color="primary" sx={{ mr: 2, fontSize: 40 }} />
+                <Box className="teacher-stat-icon primary">
+                  <PeopleIcon sx={{ fontSize: 32, color: 'white' }} />
+                </Box>
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography className="teacher-stat-label">
                     Mis Estudiantes
                   </Typography>
-                  <Typography variant="h4">{students.length}</Typography>
+                  <Typography className="teacher-stat-number">{students.length}</Typography>
                 </Box>
               </Box>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card className="teacher-stat-card">
             <CardContent>
               <Box display="flex" alignItems="center">
-                <AssignmentIcon color="secondary" sx={{ mr: 2, fontSize: 40 }} />
+                <Box className="teacher-stat-icon info">
+                  <AssignmentIcon sx={{ fontSize: 32, color: 'white' }} />
+                </Box>
                 <Box>
-                  <Typography color="textSecondary" gutterBottom>
+                  <Typography className="teacher-stat-label">
                     Gestión de Asistencias
                   </Typography>
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ color: 'var(--teacher-text-secondary)', mt: 1 }}>
                     Marca las asistencias de tus estudiantes
                   </Typography>
                 </Box>
