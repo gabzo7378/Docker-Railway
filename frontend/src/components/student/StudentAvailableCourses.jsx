@@ -1,5 +1,6 @@
 // src/components/student/StudentAvailableCourses.jsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -20,7 +21,9 @@ import {
   Tabs,
   Tab,
   IconButton,
-  Avatar
+  Avatar,
+  Divider,
+  Paper
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -29,16 +32,28 @@ import {
   Inventory2 as PackageIcon,
   CheckCircle as CheckCircleIcon,
   AddCircleOutline as AddIcon,
-  RemoveCircleOutline as RemoveIcon
+  RemoveCircleOutline as RemoveIcon,
+  Payment as PaymentIcon,
+  AccountBalance as BankIcon
 } from '@mui/icons-material';
 import { coursesAPI, packagesAPI, cyclesAPI, enrollmentsAPI, schedulesAPI } from '../../services/api';
 import './student-dashboard.css';
 
 const StudentAvailableCourses = () => {
+  const navigate = useNavigate();
+
   // --- ESTADOS DE DATOS ---
   const [courses, setCourses] = useState([]);
   const [packages, setPackages] = useState([]);
   const [cycles, setCycles] = useState([]);
+
+  // Información bancaria para pagos
+  const BANK_INFO = {
+    bank: 'Caja Cusco',
+    accountNumber: '500-8924567-0-23',
+    accountHolder: 'Academia UNI',
+    accountType: 'Cuenta de Ahorros'
+  };
 
   // --- ESTADOS DE UI/FILTROS ---
   const [loading, setLoading] = useState(true);
@@ -177,7 +192,7 @@ const StudentAvailableCourses = () => {
       setError('');
       const items = selectedItems.map(item => ({ type: item.type, id: item.id }));
       await enrollmentsAPI.create(items);
-      setSuccess('¡Matrícula exitosa! No olvides subir tu voucher.');
+      setSuccess('matricula_exitosa'); // Marcador especial para mostrar info de pago
       setSelectedItems([]);
       setOpenDialog(false);
       loadData();
@@ -291,7 +306,51 @@ const StudentAvailableCourses = () => {
 
       {/* ALERTAS */}
       {error && <Alert severity="error" className="student-alert" onClose={() => setError('')}>{error}</Alert>}
-      {success && <Alert severity="success" className="student-alert" onClose={() => setSuccess('')}>{success}</Alert>}
+      {success && success === 'matricula_exitosa' ? (
+        <Alert
+          severity="success"
+          className="student-alert"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => navigate('/student/my-enrollments')}
+              startIcon={<PaymentIcon />}
+            >
+              Ir a Pagos
+            </Button>
+          }
+        >
+          <Box>
+            <Typography variant="subtitle2" fontWeight={700}>¡Matrícula Exitosa!</Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Realiza tu pago a la cuenta:
+            </Typography>
+            <Box sx={{ mt: 1, p: 2, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: 2, border: '1px solid #cbd5e1' }}>
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Banco:</Typography>
+                  <Typography variant="body2" fontWeight={600}>{BANK_INFO.bank}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Tipo:</Typography>
+                  <Typography variant="body2" fontWeight={600}>{BANK_INFO.accountType}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">N° Cuenta:</Typography>
+                  <Typography variant="body2" fontWeight={700} color="primary">{BANK_INFO.accountNumber}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Titular:</Typography>
+                  <Typography variant="body2" fontWeight={600}>{BANK_INFO.accountHolder}</Typography>
+                </Grid>
+              </Grid>
+            </Box>
+          </Box>
+        </Alert>
+      ) : success ? (
+        <Alert severity="success" className="student-alert" onClose={() => setSuccess('')}>{success}</Alert>
+      ) : null}
 
       {/* 4. GRID DE RESULTADOS */}
       <Grid container spacing={3}>
@@ -416,7 +475,39 @@ const StudentAvailableCourses = () => {
             </Box>
           </Box>
 
-          {/* Horarios (Simplificado para brevedad) */}
+          {/* Información Bancaria */}
+          <Paper elevation={0} sx={{ p: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 2, mb: 2 }}>
+            <Box display="flex" alignItems="center" mb={1}>
+              <BankIcon color="primary" sx={{ mr: 1 }} />
+              <Typography variant="subtitle2" fontWeight={700}>Información de Pago</Typography>
+            </Box>
+            <Divider sx={{ my: 1 }} />
+            <Grid container spacing={1.5}>
+              <Grid item xs={6}>
+                <Typography variant="caption" color="text.secondary" display="block">Banco:</Typography>
+                <Typography variant="body2" fontWeight={600}>{BANK_INFO.bank}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="caption" color="text.secondary" display="block">Tipo de Cuenta:</Typography>
+                <Typography variant="body2" fontWeight={600}>{BANK_INFO.accountType}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="caption" color="text.secondary" display="block">Número de Cuenta:</Typography>
+                <Typography variant="body2" fontWeight={700} color="primary">{BANK_INFO.accountNumber}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="caption" color="text.secondary" display="block">Titular:</Typography>
+                <Typography variant="body2" fontWeight={600}>{BANK_INFO.accountHolder}</Typography>
+              </Grid>
+            </Grid>
+            <Alert severity="info" sx={{ mt: 2, py: 0.5 }}>
+              <Typography variant="caption">
+                Después de confirmar, sube tu comprobante en "Mis Matrículas"
+              </Typography>
+            </Alert>
+          </Paper>
+
+          {/* Horarios (Mejorado para mostrar nombres de cursos en paquetes) */}
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>📅 Horarios Previstos</Typography>
           {loadingSchedules ? (
             <Typography variant="caption">Cargando horarios...</Typography>
@@ -425,6 +516,41 @@ const StudentAvailableCourses = () => {
               {selectedItems.map(item => {
                 const list = schedulesPreview[item.key] || [];
                 if (!list.length) return null;
+
+                // Para paquetes, agrupar por curso
+                if (item.type === 'package') {
+                  // Agrupar horarios por curso
+                  const groupedByCourse = {};
+                  list.forEach(schedule => {
+                    const courseName = schedule.course_name || 'Sin nombre';
+                    if (!groupedByCourse[courseName]) {
+                      groupedByCourse[courseName] = [];
+                    }
+                    groupedByCourse[courseName].push(schedule);
+                  });
+
+                  return (
+                    <Box key={item.key} mb={2} sx={{ pl: 1, borderLeft: '3px solid #6366f1' }}>
+                      <Typography variant="caption" fontWeight={700} color="primary" display="block" sx={{ mb: 0.5 }}>
+                        {item.name}
+                      </Typography>
+                      {Object.entries(groupedByCourse).map(([courseName, schedules]) => (
+                        <Box key={courseName} mb={1} sx={{ ml: 1 }}>
+                          <Typography variant="caption" fontWeight={600} color="text.primary" display="block">
+                            • {courseName}
+                          </Typography>
+                          {schedules.map((s, i) => (
+                            <Typography key={i} variant="caption" display="block" sx={{ ml: 2, color: '#64748b' }}>
+                              - {s.day_of_week}: {s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)}
+                            </Typography>
+                          ))}
+                        </Box>
+                      ))}
+                    </Box>
+                  );
+                }
+
+                // Para cursos individuales, mostrar directamente
                 return (
                   <Box key={item.key} mb={1}>
                     <Typography variant="caption" fontWeight={700} color="primary">{item.name}</Typography>
@@ -434,7 +560,7 @@ const StudentAvailableCourses = () => {
                       </Typography>
                     ))}
                   </Box>
-                )
+                );
               })}
             </Box>
           )}

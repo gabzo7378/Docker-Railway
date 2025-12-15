@@ -101,12 +101,30 @@ async def create_enrollment(student_id: int, data: EnrollmentCreate, db: asyncpg
     for item in data.items:
         # Check if already enrolled
         if item.type == "course":
+            # Check if already enrolled in this exact course offering
             existing = await db.fetchrow(
-                "SELECT id FROM enrollments WHERE student_id = $1 AND course_offering_id = $2",
+                "SELECT id FROM enrollments WHERE student_id = $1 AND course_offering_id = $2 AND status != 'cancelado'",
                 student_id, item.id
             )
             if existing:
-                return {"error": "El estudiante ya está matriculado en este curso"}
+                return {"error": "Usted ya está matriculado en ese curso, no puede volver a matricularse"}
+            
+            # Check if the course is already part of an enrolled package
+            course_in_package = await db.fetchrow(
+                """SELECT c.name as course_name, p.name as package_name
+                   FROM enrollments e
+                   JOIN package_offerings po ON e.package_offering_id = po.id
+                   JOIN packages p ON po.package_id = p.id
+                   JOIN package_offering_courses poc ON poc.package_offering_id = po.id
+                   JOIN course_offerings co ON poc.course_offering_id = co.id
+                   JOIN courses c ON co.course_id = c.id
+                   WHERE e.student_id = $1 
+                     AND e.status != 'cancelado'
+                     AND co.id = $2""",
+                student_id, item.id
+            )
+            if course_in_package:
+                return { "error": f"Usted ya está matriculado en ese curso, no puede volver a matricularse (el curso está incluido en {course_in_package['package_name']})" }
             
             # Get price
             offering = await db.fetchrow(
@@ -127,12 +145,29 @@ async def create_enrollment(student_id: int, data: EnrollmentCreate, db: asyncpg
             enrollment_id = enr_result['id']
             
         else:  # package
+            # Check if already enrolled in this exact package offering
             existing = await db.fetchrow(
-                "SELECT id FROM enrollments WHERE student_id = $1 AND package_offering_id = $2",
+                "SELECT id FROM enrollments WHERE student_id = $1 AND package_offering_id = $2 AND status != 'cancelado'",
                 student_id, item.id
             )
             if existing:
-                return {"error": "El estudiante ya está matriculado en este paquete"}
+                return {"error": "Usted ya está matriculado en ese paquete, no puede volver a matricularse"}
+            
+            # Check if any course in this package is already enrolled individually
+            course_conflict = await db.fetchrow(
+                """SELECT c.name as course_name
+                   FROM package_offering_courses poc
+                   JOIN course_offerings co ON poc.course_offering_id = co.id
+                   JOIN courses c ON co.course_id = c.id
+                   JOIN enrollments e ON e.course_offering_id = co.id
+                   WHERE poc.package_offering_id = $1 
+                     AND e.student_id = $2
+                     AND e.status != 'cancelado'
+                   LIMIT 1""",
+                item.id, student_id
+            )
+            if course_conflict:
+                return {"error": f"Usted ya está matriculado en ese curso, no puede volver a matricularse (el curso {course_conflict['course_name']} del paquete ya está matriculado)"}
             
             # Get price
             offering = await db.fetchrow(

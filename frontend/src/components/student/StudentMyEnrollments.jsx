@@ -23,7 +23,12 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
-import { Upload as UploadIcon } from '@mui/icons-material';
+import {
+  Upload as UploadIcon,
+  CheckCircleOutline as CheckIcon,
+  Phone as PhoneIcon,
+  Email as EmailIcon
+} from '@mui/icons-material';
 import { enrollmentsAPI, paymentsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import './student-dashboard.css';
@@ -70,7 +75,7 @@ const StudentMyEnrollments = () => {
     try {
       setError('');
       await paymentsAPI.uploadVoucher(installmentId, voucherFile);
-      setSuccess('Voucher subido correctamente');
+      setSuccess('voucher_subido'); // Marcador especial para mostrar mensaje completo
       setOpenVoucherDialog(false);
       setVoucherFile(null);
       loadEnrollments();
@@ -134,11 +139,91 @@ const StudentMyEnrollments = () => {
         </Alert>
       )}
 
-      {success && (
+      {success && success === 'voucher_subido' ? (
+        <Alert
+          severity="success"
+          className="student-alert"
+          icon={<CheckIcon fontSize="large" />}
+          sx={{
+            bgcolor: '#f0fdf4',
+            border: '2px solid #86efac',
+            '& .MuiAlert-icon': { color: '#16a34a' }
+          }}
+        >
+          <Box>
+            <Typography variant="h6" fontWeight={700} sx={{ color: '#15803d', mb: 1 }}>
+              ¡Gracias por matricularte con nosotros!
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Tu comprobante ha sido enviado correctamente. Por favor, espera a que un administrador acepte tu matrícula.
+              Este proceso puede tardar un poco.
+            </Typography>
+
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                bgcolor: 'white',
+                borderRadius: 2,
+                border: '1px solid #d1fae5'
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, color: '#15803d' }}>
+                ¿Tienes dudas? Contáctanos:
+              </Typography>
+              <Grid container spacing={1.5}>
+                <Grid item xs={12} sm={6}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <PhoneIcon fontSize="small" sx={{ color: '#16a34a' }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Teléfono
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        +51 938 865 416
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <EmailIcon fontSize="small" sx={{ color: '#16a34a' }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Email
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        info@academiauni.edu.pe
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setSuccess('')}
+              sx={{
+                mt: 2,
+                borderColor: '#86efac',
+                color: '#15803d',
+                '&:hover': {
+                  borderColor: '#22c55e',
+                  bgcolor: '#f0fdf4'
+                }
+              }}
+            >
+              Entendido
+            </Button>
+          </Box>
+        </Alert>
+      ) : success ? (
         <Alert severity="success" className="student-alert" onClose={() => setSuccess('')}>
           {success}
         </Alert>
-      )}
+      ) : null}
 
       <Grid container spacing={3}>
         {enrollments

@@ -33,6 +33,7 @@ import AdminSchedules from './components/admin/AdminSchedules';
 import StudentDashboardComplete from './components/student/StudentDashboardComplete';
 import StudentAvailableCourses from './components/student/StudentAvailableCourses';
 import StudentMyEnrollments from './components/student/StudentMyEnrollments';
+import MyCourses from './components/student/MyCourses';
 
 // Teacher Components
 import TeacherDashboard from './components/teacher/TeacherDashboard';
@@ -96,6 +97,7 @@ function App() {
               <Route path="dashboard" element={<StudentDashboardComplete />} />
               <Route path="available-courses" element={<StudentAvailableCourses />} />
               <Route path="my-enrollments" element={<StudentMyEnrollments />} />
+              <Route path="my-courses" element={<MyCourses />} />
             </Route>
 
             {/* Teacher Routes */}

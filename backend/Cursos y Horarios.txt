@@ -1,0 +1,66 @@
+Los cursos que enseña la academia (Estos son los cursos que ofrecera la academia con un precio base entre s/150 y s/200)
+
+Aritmetica
+Algebra
+Geometria
+Trigonometria
+Fisica I
+Fisica II
+Competencia Linguística
+Quimica
+Biologia
+Historia
+Filosofia y Logica
+Educacion Civica
+Razonamiento Matematico
+Razonamiento Verbal
+Geografia
+Economia
+
+
+A cada uno de estos asignale un grupo y horario distinto en caso de que en varios grupos se enseñe el mismo curso contal de que no se solapen
+viendo la logica del backend, ademas quiero que crees un script para crear alrededor de 20 - 25 docentes con datos aleatorios
+y asignales a los cursos, los horarios tienen que estar de lunes a viernes de 7am a 13pm y de 14pm a 20pm, y sabados desde
+7am hasta 12pm, dandole mas tiempo a los cursos mas 'importantes' porfavor
+tambien asignales un ciclo llamado ciclo verano que empieze el 5 de enero del 2026 y que dure 2 meses
+
+
+
+Grupos o paquetes de cursos
+Grupo A - Ingenieria y Ciencias Basicas
+Aritmetica
+Algebra
+Geometria
+Trigonometria
+Fisica I
+Fisica II
+Competencia Lingüística
+Quimica
+
+Grupo B - Ciencias de la Salud
+Aritmetica
+Algebra
+Biologia
+Fisica I
+Fisica II
+Competencia Linguística
+Quimica
+
+Grupo C - Ciencias Empresariales
+Aritmetica
+Algebra
+Historia
+Competencia Linguística
+Geografia
+Economia
+Educacion Civica
+
+Grupo D - Ciencias Sociales
+Aritmetica
+Algebra
+Historia
+Competencia Linguística
+Geografia
+Economia
+Educacion Civica
+

@@ -22,6 +22,7 @@ import {
   Dashboard as DashboardIcon,
   School as SchoolIcon,
   Book as BookIcon,
+  CalendarMonth as ScheduleIcon,
   ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
@@ -33,6 +34,7 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/student/dashboard' },
   { text: 'Cursos Disponibles', icon: <SchoolIcon />, path: '/student/available-courses' },
   { text: 'Mis Matrículas', icon: <BookIcon />, path: '/student/my-enrollments' },
+  { text: 'Mis Cursos', icon: <ScheduleIcon />, path: '/student/my-courses' },
 ];
 
 const StudentLayout = () => {

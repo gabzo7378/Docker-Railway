@@ -7,7 +7,7 @@ async def register_student(data: StudentCreate, db: asyncpg.Connection):
     # Check if student exists
     existing = await db.fetchrow("SELECT id FROM students WHERE dni = $1", data.dni)
     if existing:
-        return {"error": "El estudiante ya existe"}
+        return {"error": "DNI registrado previamente, por favor ingrese otro"}
     
     password_hash = get_password_hash(data.password)
     
@@ -71,7 +71,7 @@ async def login_user(credentials: UserLogin, db: asyncpg.Connection):
     )
     
     if not student:
-        return {"error": "Usuario no encontrado"}
+        return {"error": "DNI o contraseña incorrectos"}
     
     if not verify_password(credentials.password, student['password_hash']):
         return {"error": "DNI o contraseña incorrectos"}
