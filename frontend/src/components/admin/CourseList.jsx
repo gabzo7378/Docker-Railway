@@ -1,5 +1,5 @@
 // src/components/admin/CourseList.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -13,17 +13,18 @@ import {
   Button,
   Chip,
   Collapse,
-  IconButton
-} from '@mui/material';
-import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
+  IconButton,
+} from "@mui/material";
+import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
+import { Link } from "react-router-dom";
+import { coursesAPI } from "../../services/api";
 
 const CourseRow = ({ course }) => {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
         <TableCell>
           <IconButton
             aria-label="expand row"
@@ -36,7 +37,7 @@ const CourseRow = ({ course }) => {
         <TableCell component="th" scope="row">
           {course.name}
         </TableCell>
-        <TableCell>{course.teacher_name || 'Sin asignar'}</TableCell>
+        <TableCell>{course.teacher_name || "Sin asignar"}</TableCell>
         <TableCell>S/. {course.price}</TableCell>
         <TableCell>{course.schedules?.length || 0} horarios</TableCell>
       </TableRow>
@@ -77,39 +78,25 @@ const CourseRow = ({ course }) => {
 
 const CourseList = () => {
   const [courses, setCourses] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:4000/api/courses', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data);
-        } else {
-          throw new Error('Error al cargar los cursos');
-        }
+        const data = await coursesAPI.getAll();
+        setCourses(data);
       } catch (err) {
-        console.error('Error:', err);
-        setError('Error al cargar los cursos');
+        console.error("Error:", err);
+        setError("Error al cargar los cursos");
       }
     };
-
     fetchCourses();
   }, []);
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h5">
-          Cursos
-        </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <Typography variant="h5">Cursos</Typography>
         <Button
           variant="contained"
           color="primary"

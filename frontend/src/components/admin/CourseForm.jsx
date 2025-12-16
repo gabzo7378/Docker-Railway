@@ -1,5 +1,5 @@
 // src/components/admin/CourseForm.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -13,118 +13,94 @@ import {
   MenuItem,
   Chip,
   Stack,
-  IconButton
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { useFormik } from 'formik';
-import * as yup from 'yup';
+  IconButton,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { useFormik } from "formik";
+import * as yup from "yup";
+import { teachersAPI, coursesAPI, schedulesAPI } from "../../services/api";
 
 const validationSchema = yup.object({
-  name: yup.string().required('El nombre del curso es requerido'),
-  description: yup.string().required('La descripción es requerida'),
-  teacher_id: yup.number().required('El profesor es requerido'),
-  price: yup.number().required('El precio es requerido').min(0, 'El precio no puede ser negativo'),
+  name: yup.string().required("El nombre del curso es requerido"),
+  description: yup.string().required("La descripción es requerida"),
+  teacher_id: yup.number().required("El profesor es requerido"),
+  price: yup
+    .number()
+    .required("El precio es requerido")
+    .min(0, "El precio no puede ser negativo"),
 });
 
 const DAYS = [
-  'Lunes',
-  'Martes',
-  'Miércoles',
-  'Jueves',
-  'Viernes',
-  'Sábado',
-  'Domingo'
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo",
 ];
 
 const CourseForm = () => {
   const [teachers, setTeachers] = useState([]);
   const [schedules, setSchedules] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // Cargar lista de profesores
     const fetchTeachers = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:4000/api/teachers', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setTeachers(data);
-        }
+        const data = await teachersAPI.getAll();
+        setTeachers(data);
       } catch (err) {
-        console.error('Error al cargar profesores:', err);
-        setError('Error al cargar la lista de profesores');
+        console.error("Error al cargar profesores:", err);
+        setError("Error al cargar la lista de profesores");
       }
     };
-
     fetchTeachers();
   }, []);
 
   const formik = useFormik({
     initialValues: {
-      name: '',
-      description: '',
-      teacher_id: '',
-      price: '',
+      name: "",
+      description: "",
+      teacher_id: "",
+      price: "",
     },
     validationSchema,
     onSubmit: async (values) => {
       try {
-        const token = localStorage.getItem('token');
-        // Crear el curso
-        const courseResponse = await fetch('http://localhost:4000/api/courses', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(values),
-        });
+        const courseData = await coursesAPI.create(values);
 
-        const courseData = await courseResponse.json();
+        const schedulePromises = schedules.map((schedule) =>
+          schedulesAPI.create({
+            course_id: courseData.id,
+            day_of_week: schedule.day,
+            start_time: schedule.startTime,
+            end_time: schedule.endTime,
+            classroom: schedule.classroom,
+          })
+        );
 
-        if (courseResponse.ok) {
-          // Crear los horarios para el curso
-          const schedulePromises = schedules.map(schedule =>
-            fetch('http://localhost:4000/api/schedules', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                course_id: courseData.id,
-                day_of_week: schedule.day,
-                start_time: schedule.startTime,
-                end_time: schedule.endTime,
-                classroom: schedule.classroom
-              }),
-            })
-          );
-
-          await Promise.all(schedulePromises);
-          alert('Curso y horarios creados exitosamente');
-          formik.resetForm();
-          setSchedules([]);
-        }
+        await Promise.all(schedulePromises);
+        alert("Curso y horarios creados exitosamente");
+        formik.resetForm();
+        setSchedules([]);
       } catch (err) {
-        console.error('Error:', err);
-        setError('Error al crear el curso');
+        console.error("Error:", err);
+        setError("Error al crear el curso");
       }
     },
   });
 
   const handleAddSchedule = () => {
-    setSchedules([...schedules, {
-      day: '',
-      startTime: '',
-      endTime: '',
-      classroom: ''
-    }]);
+    setSchedules([
+      ...schedules,
+      {
+        day: "",
+        startTime: "",
+        endTime: "",
+        classroom: "",
+      },
+    ]);
   };
 
   const handleRemoveSchedule = (index) => {
@@ -135,7 +111,7 @@ const CourseForm = () => {
     const newSchedules = [...schedules];
     newSchedules[index] = {
       ...newSchedules[index],
-      [field]: value
+      [field]: value,
     };
     setSchedules(newSchedules);
   };
@@ -172,8 +148,13 @@ const CourseForm = () => {
                 rows={4}
                 value={formik.values.description}
                 onChange={formik.handleChange}
-                error={formik.touched.description && Boolean(formik.errors.description)}
-                helperText={formik.touched.description && formik.errors.description}
+                error={
+                  formik.touched.description &&
+                  Boolean(formik.errors.description)
+                }
+                helperText={
+                  formik.touched.description && formik.errors.description
+                }
               />
             </Grid>
 
@@ -185,7 +166,10 @@ const CourseForm = () => {
                   name="teacher_id"
                   value={formik.values.teacher_id}
                   onChange={formik.handleChange}
-                  error={formik.touched.teacher_id && Boolean(formik.errors.teacher_id)}
+                  error={
+                    formik.touched.teacher_id &&
+                    Boolean(formik.errors.teacher_id)
+                  }
                 >
                   {teachers.map((teacher) => (
                     <MenuItem key={teacher.id} value={teacher.id}>
@@ -215,14 +199,24 @@ const CourseForm = () => {
                 Horarios
               </Typography>
               {schedules.map((schedule, index) => (
-                <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Box
+                  key={index}
+                  sx={{
+                    mb: 2,
+                    p: 2,
+                    border: "1px solid #ddd",
+                    borderRadius: 1,
+                  }}
+                >
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} md={2}>
                       <FormControl fullWidth>
                         <InputLabel>Día</InputLabel>
                         <Select
                           value={schedule.day}
-                          onChange={(e) => handleScheduleChange(index, 'day', e.target.value)}
+                          onChange={(e) =>
+                            handleScheduleChange(index, "day", e.target.value)
+                          }
                         >
                           {DAYS.map((day) => (
                             <MenuItem key={day} value={day}>
@@ -238,7 +232,13 @@ const CourseForm = () => {
                         label="Hora inicio"
                         type="time"
                         value={schedule.startTime}
-                        onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
+                        onChange={(e) =>
+                          handleScheduleChange(
+                            index,
+                            "startTime",
+                            e.target.value
+                          )
+                        }
                         InputLabelProps={{ shrink: true }}
                       />
                     </Grid>
@@ -248,7 +248,9 @@ const CourseForm = () => {
                         label="Hora fin"
                         type="time"
                         value={schedule.endTime}
-                        onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
+                        onChange={(e) =>
+                          handleScheduleChange(index, "endTime", e.target.value)
+                        }
                         InputLabelProps={{ shrink: true }}
                       />
                     </Grid>
@@ -257,11 +259,20 @@ const CourseForm = () => {
                         fullWidth
                         label="Aula"
                         value={schedule.classroom}
-                        onChange={(e) => handleScheduleChange(index, 'classroom', e.target.value)}
+                        onChange={(e) =>
+                          handleScheduleChange(
+                            index,
+                            "classroom",
+                            e.target.value
+                          )
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} md={2}>
-                      <IconButton onClick={() => handleRemoveSchedule(index)} color="error">
+                      <IconButton
+                        onClick={() => handleRemoveSchedule(index)}
+                        color="error"
+                      >
                         <DeleteIcon />
                       </IconButton>
                     </Grid>
