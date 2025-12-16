@@ -1,49 +1,52 @@
 // src/components/admin/AdminPayments.jsx
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Button, Paper } from '@mui/material';
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Button,
+  Paper,
+} from "@mui/material";
+import { paymentsAPI } from "../../services/api";
 
 const AdminPayments = () => {
   const [payments, setPayments] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const fetchPayments = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:4000/api/payments?status=pendiente', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok) setPayments(data);
-      else setError(data.message || 'Error al cargar pagos');
+      const data = await paymentsAPI.getAll("pendiente");
+      setPayments(data);
     } catch (err) {
       console.error(err);
-      setError('Error al cargar pagos');
+      setError("Error al cargar pagos");
     }
   };
 
-  useEffect(() => { fetchPayments(); }, []);
+  useEffect(() => {
+    fetchPayments();
+  }, []);
 
-  const handleApprove = async (enrollmentId) => {
+  const handleApprove = async (installmentId) => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:4000/api/payments/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ enrollment_id: enrollmentId })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Error al aprobar');
+      await paymentsAPI.approveInstallment(installmentId);
       fetchPayments();
-      alert('Pago aprobado');
+      alert("Pago aprobado");
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Error al aprobar');
+      setError(err.message || "Error al aprobar");
     }
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>Pagos pendientes</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Pagos pendientes
+      </Typography>
       {error && <Typography color="error">{error}</Typography>}
       <Paper>
         <Table>
@@ -58,15 +61,40 @@ const AdminPayments = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {payments.map(p => (
+            {payments.map((p) => (
               <TableRow key={p.id}>
                 <TableCell>{p.id}</TableCell>
-                <TableCell>{p.first_name} {p.last_name} ({p.dni})</TableCell>
-                <TableCell>{p.item_name} ({p.type})</TableCell>
-                <TableCell>S/. {p.amount}</TableCell>
-                <TableCell>{p.voucher_url ? <a href={`http://localhost:4000${p.voucher_url}`} target="_blank" rel="noreferrer">Ver</a> : 'Sin voucher' }</TableCell>
                 <TableCell>
-                  <Button variant="contained" size="small" onClick={() => handleApprove(p.enrollment_id)}>Aprobar</Button>
+                  {p.first_name} {p.last_name} ({p.dni})
+                </TableCell>
+                <TableCell>
+                  {p.item_name} ({p.type})
+                </TableCell>
+                <TableCell>S/. {p.amount}</TableCell>
+                <TableCell>
+                  {p.voucher_url ? (
+                    <a
+                      href={`${
+                        import.meta.env.VITE_API_URL?.replace("/api", "") ||
+                        "http://localhost:4000"
+                      }${p.voucher_url}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Ver
+                    </a>
+                  ) : (
+                    "Sin voucher"
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => handleApprove(p.enrollment_id)}
+                  >
+                    Aprobar
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
