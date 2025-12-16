@@ -1,5 +1,5 @@
 // src/components/admin/AdminPaymentsComplete.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -44,6 +44,9 @@ const AdminPaymentsComplete = () => {
     type: "info",
   });
 
+  // Use ref to preserve installmentId across state updates
+  const pendingInstallmentId = useRef(null);
+
   useEffect(() => {
     loadPayments();
   }, [statusFilter]);
@@ -67,20 +70,20 @@ const AdminPaymentsComplete = () => {
   };
 
   const handleReject = (installmentId) => {
+    pendingInstallmentId.current = installmentId;
     setConfirmDialog({ open: true, type: "reject", installmentId });
   };
 
   const confirmReject = () => {
-    // Keep installmentId when transitioning to prompt dialog
-    const { installmentId } = confirmDialog;
-    setConfirmDialog({ open: false, type: "", installmentId });
+    setConfirmDialog({ open: false, type: "", installmentId: null });
     setPromptDialog({ open: true });
   };
 
   const executeReject = async (reason) => {
-    const { installmentId } = confirmDialog;
+    const installmentId = pendingInstallmentId.current;
     setPromptDialog({ open: false });
     setConfirmDialog({ open: false, type: "", installmentId: null });
+    pendingInstallmentId.current = null;
 
     if (!installmentId) {
       setAlertMessage({
