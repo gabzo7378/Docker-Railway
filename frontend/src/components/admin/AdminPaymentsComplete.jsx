@@ -71,12 +71,26 @@ const AdminPaymentsComplete = () => {
   };
 
   const confirmReject = () => {
-    setConfirmDialog({ ...confirmDialog, open: false });
+    // Keep installmentId when transitioning to prompt dialog
+    const { installmentId } = confirmDialog;
+    setConfirmDialog({ open: false, type: "", installmentId });
     setPromptDialog({ open: true });
   };
 
   const executeReject = async (reason) => {
     const { installmentId } = confirmDialog;
+    setPromptDialog({ open: false });
+    setConfirmDialog({ open: false, type: "", installmentId: null });
+
+    if (!installmentId) {
+      setAlertMessage({
+        open: true,
+        message: "Error: ID de pago no encontrado",
+        type: "error",
+      });
+      return;
+    }
+
     try {
       await paymentsAPI.rejectInstallment(installmentId, reason || null);
       setAlertMessage({
