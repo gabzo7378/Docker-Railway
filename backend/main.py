@@ -23,9 +23,14 @@ app = FastAPI(title="Academia API", version="2.0.0")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=[
+        "http://localhost:3000",  # React por defecto
+        "http://localhost:5173",  # Vite por defecto
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -63,6 +68,18 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
+@app.get("/api/test")
+async def test_endpoint():
+    return {
+        "message": "Backend is running",
+        "timestamp": datetime.now().isoformat(),
+        "status": "ok"
+    }
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=4000)
+    uvicorn.run(
+        app, 
+        host="0.0.0.0",  # Esto permite conexiones externas
+        port=int(os.getenv("PORT", "4000"))
+    )

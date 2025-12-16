@@ -4,7 +4,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = f"postgresql://{os.getenv('DB_USER', 'postgres')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'academia_final')}"
+# Usa directamente la variable DATABASE_URL del entorno
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    # Fallback para desarrollo local (si es necesario)
+    "postgresql://postgres:postgres@localhost:5432/railway"
+)
 
 pool = None
 
@@ -15,7 +20,9 @@ async def get_db_pool():
             DATABASE_URL,
             min_size=5,
             max_size=20,
-            command_timeout=60
+            command_timeout=60,
+            # Opciones adicionales para conexiones externas
+            ssl="require" if "railway" in DATABASE_URL else "prefer"
         )
     return pool
 
