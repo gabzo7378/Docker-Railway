@@ -69,10 +69,12 @@ async def approve_post(data: dict, db: asyncpg.Connection = Depends(get_db)):
 # Reject installment (like Node.js)
 @router.post("/reject", dependencies=[Depends(require_role(["admin"]))])
 async def reject_post(data: dict, db: asyncpg.Connection = Depends(get_db)):
+    print(f"DEBUG reject_post received data: {data}")  # Debug log
     installment_id = data.get("installment_id")
     reason = data.get("reason")
+    print(f"DEBUG installment_id: {installment_id}, reason: {reason}")  # Debug log
     if not installment_id:
-        raise HTTPException(status_code=400, detail="installment_id es requerido")
+        raise HTTPException(status_code=400, detail=f"installment_id es requerido. Received: {data}")
     result = await paymentController.reject_installment(installment_id, reason, db)
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
