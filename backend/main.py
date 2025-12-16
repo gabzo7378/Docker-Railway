@@ -33,6 +33,9 @@ allowed_origins = [
 frontend_url = os.getenv("FRONTEND_URL")
 if frontend_url:
     allowed_origins.append(frontend_url)
+    # También agregar versión sin trailing slash si la tiene
+    if frontend_url.endswith("/"):
+        allowed_origins.append(frontend_url[:-1])
 
 app.add_middleware(
     CORSMiddleware,
