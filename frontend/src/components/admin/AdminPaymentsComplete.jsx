@@ -250,10 +250,7 @@ const AdminPaymentsComplete = () => {
                   {payment.voucher_url ? (
                     <Button
                       size="small"
-                      href={`${
-                        import.meta.env.VITE_API_URL?.replace("/api", "") ||
-                        "http://localhost:4000"
-                      }${payment.voucher_url}`}
+                      href={payment.voucher_url}
                       target="_blank"
                       startIcon={<VisibilityIcon />}
                     >

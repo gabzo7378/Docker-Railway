@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from config.database import get_db_pool, close_db_pool
 from datetime import datetime
 import os
@@ -45,11 +44,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files for uploads
-uploads_dir = "uploads"
-if not os.path.exists(uploads_dir):
-    os.makedirs(uploads_dir)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+# Configure Cloudinary
+from config.cloudinary import configure_cloudinary
+configure_cloudinary()
 
 # Include routers
 app.include_router(auth.router, prefix="/api")

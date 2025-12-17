@@ -25,7 +25,9 @@ async def get_installments(payment_plan_id: int, db: asyncpg.Connection):
     return [dict(i) for i in installments]
 
 async def upload_voucher(installment_id: int, file: UploadFile, student_id: int, db: asyncpg.Connection):
-    """Upload voucher - matches Node.js logic"""
+    """Upload voucher to Cloudinary"""
+    from config.cloudinary import upload_to_cloudinary
+    
     # Verify installment exists and permission
     inst = await db.fetchrow(
         """SELECT i.*, pp.enrollment_id, e.student_id 
@@ -39,17 +41,21 @@ async def upload_voucher(installment_id: int, file: UploadFile, student_id: int,
     if not inst:
         return {"error": "Installment no encontrado"}
     
-    # Save file
-    upload_dir = "uploads"
-    os.makedirs(upload_dir, exist_ok=True)
+    # Read file content
+    content = await file.read()
     
-    voucher_url = f"/uploads/{file.filename}"
-    file_path = f"{upload_dir}/{file.filename}"
-    with open(file_path, "wb") as f:
-        content = await file.read()
-        f.write(content)
+    # Generate unique filename with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"voucher_{installment_id}_{timestamp}"
     
-    # Update installment - clear rejection_reason and set status to pending (like Node.js)
+    # Upload to Cloudinary
+    try:
+        result = await upload_to_cloudinary(content, filename, folder="Academia-UNI/vouchers")
+        voucher_url = result["url"]
+    except Exception as e:
+        return {"error": f"Error al subir imagen: {str(e)}"}
+    
+    # Update installment - clear rejection_reason and set status to pending
     await db.execute(
         "UPDATE installments SET voucher_url = $1, status = $2, rejection_reason = NULL WHERE id = $3",
         voucher_url, "pending", installment_id

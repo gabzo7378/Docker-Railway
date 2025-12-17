@@ -68,10 +68,7 @@ const AdminEnrollments = () => {
                   <TableCell>
                     {e.voucher_url ? (
                       <a
-                        href={`${
-                          import.meta.env.VITE_API_URL?.replace("/api", "") ||
-                          "http://localhost:4000"
-                        }${e.voucher_url}`}
+                        href={e.voucher_url}
                         target="_blank"
                         rel="noreferrer"
                       >

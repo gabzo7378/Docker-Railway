@@ -297,15 +297,14 @@ const StudentMyEnrollments = () => {
                     </Box>
                     <Chip
                       label={getStatusLabel(enrollment.status)}
-                      className={`student-badge ${
-                        enrollment.status === "aceptado"
+                      className={`student-badge ${enrollment.status === "aceptado"
                           ? "approved"
                           : enrollment.status === "pendiente"
-                          ? "pending"
-                          : enrollment.status === "rechazado"
-                          ? "rejected"
-                          : "default"
-                      }`}
+                            ? "pending"
+                            : enrollment.status === "rechazado"
+                              ? "rejected"
+                              : "default"
+                        }`}
                       size="small"
                     />
                   </Box>
@@ -327,24 +326,24 @@ const StudentMyEnrollments = () => {
                   )}
                   {(enrollment.cycle_start_date ||
                     enrollment.cycle_end_date) && (
-                    <Typography
-                      variant="body2"
-                      color="textSecondary"
-                      gutterBottom
-                    >
-                      {enrollment.cycle_start_date
-                        ? new Date(
+                      <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        gutterBottom
+                      >
+                        {enrollment.cycle_start_date
+                          ? new Date(
                             enrollment.cycle_start_date
                           ).toLocaleDateString()
-                        : "-"}{" "}
-                      -{" "}
-                      {enrollment.cycle_end_date
-                        ? new Date(
+                          : "-"}{" "}
+                        -{" "}
+                        {enrollment.cycle_end_date
+                          ? new Date(
                             enrollment.cycle_end_date
                           ).toLocaleDateString()
-                        : "-"}
-                    </Typography>
-                  )}
+                          : "-"}
+                      </Typography>
+                    )}
                   {/* Para matrículas de paquete, mostrar descripción de cursos incluidos */}
                   {enrollment.enrollment_type === "package" &&
                     enrollment.package_courses_summary && (
@@ -460,8 +459,8 @@ const StudentMyEnrollments = () => {
                                   <TableCell>
                                     {installment.due_date
                                       ? new Date(
-                                          installment.due_date
-                                        ).toLocaleDateString()
+                                        installment.due_date
+                                      ).toLocaleDateString()
                                       : "-"}
                                   </TableCell>
                                   <TableCell>
@@ -470,15 +469,15 @@ const StudentMyEnrollments = () => {
                                         installment.status === "paid"
                                           ? "Pagado"
                                           : installment.status === "overdue"
-                                          ? "Vencido"
-                                          : "Pendiente"
+                                            ? "Vencido"
+                                            : "Pendiente"
                                       }
                                       color={
                                         installment.status === "paid"
                                           ? "success"
                                           : installment.status === "overdue"
-                                          ? "error"
-                                          : "warning"
+                                            ? "error"
+                                            : "warning"
                                       }
                                       size="small"
                                     />
@@ -506,12 +505,7 @@ const StudentMyEnrollments = () => {
                                         size="small"
                                         variant="outlined"
                                         className="student-btn-secondary"
-                                        href={`${
-                                          import.meta.env.VITE_API_URL?.replace(
-                                            "/api",
-                                            ""
-                                          ) || "http://localhost:4000"
-                                        }${installment.voucher_url}`}
+                                        href={installment.voucher_url}
                                         target="_blank"
                                         sx={{ textTransform: "none" }}
                                       >
@@ -582,20 +576,20 @@ const StudentMyEnrollments = () => {
                         )}
                         {(parentEnrollment.cycle_start_date ||
                           parentEnrollment.cycle_end_date) && (
-                          <Typography variant="body2" color="textSecondary">
-                            {parentEnrollment.cycle_start_date
-                              ? new Date(
+                            <Typography variant="body2" color="textSecondary">
+                              {parentEnrollment.cycle_start_date
+                                ? new Date(
                                   parentEnrollment.cycle_start_date
                                 ).toLocaleDateString()
-                              : "-"}{" "}
-                            -{" "}
-                            {parentEnrollment.cycle_end_date
-                              ? new Date(
+                                : "-"}{" "}
+                              -{" "}
+                              {parentEnrollment.cycle_end_date
+                                ? new Date(
                                   parentEnrollment.cycle_end_date
                                 ).toLocaleDateString()
-                              : "-"}
-                          </Typography>
-                        )}
+                                : "-"}
+                            </Typography>
+                          )}
                       </>
                     )}
                     <Typography variant="body2">

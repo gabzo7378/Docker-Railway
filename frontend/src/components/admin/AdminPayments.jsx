@@ -74,10 +74,7 @@ const AdminPayments = () => {
                 <TableCell>
                   {p.voucher_url ? (
                     <a
-                      href={`${
-                        import.meta.env.VITE_API_URL?.replace("/api", "") ||
-                        "http://localhost:4000"
-                      }${p.voucher_url}`}
+                      href={p.voucher_url}
                       target="_blank"
                       rel="noreferrer"
                     >
