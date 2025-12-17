@@ -142,7 +142,6 @@ const AdminTeachers = () => {
         <Table className="admin-table">
           <TableHead className="admin-table-head">
             <TableRow>
-              <TableCell className="admin-table-head-cell">ID</TableCell>
               <TableCell className="admin-table-head-cell">Nombre</TableCell>
               <TableCell className="admin-table-head-cell">DNI</TableCell>
               <TableCell className="admin-table-head-cell">Teléfono</TableCell>
@@ -154,7 +153,6 @@ const AdminTeachers = () => {
           <TableBody>
             {getFilteredTeachers().map(t => (
               <TableRow key={t.id} className="admin-table-row">
-                <TableCell className="admin-table-cell">{t.id}</TableCell>
                 <TableCell className="admin-table-cell">
                   <Typography variant="subtitle2" fontWeight="bold">{t.name}</Typography>
                 </TableCell>
@@ -176,7 +174,7 @@ const AdminTeachers = () => {
             ))}
             {getFilteredTeachers().length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                   <Typography color="text.secondary">
                     {searchQuery ? 'No se encontraron docentes' : 'No hay docentes registrados'}
                   </Typography>

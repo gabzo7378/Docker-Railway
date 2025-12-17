@@ -52,7 +52,6 @@ const AdminPayments = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID Pago</TableCell>
               <TableCell>Estudiante</TableCell>
               <TableCell>Item</TableCell>
               <TableCell>Monto</TableCell>
@@ -63,7 +62,6 @@ const AdminPayments = () => {
           <TableBody>
             {payments.map((p) => (
               <TableRow key={p.id}>
-                <TableCell>{p.id}</TableCell>
                 <TableCell>
                   {p.first_name} {p.last_name} ({p.dni})
                 </TableCell>

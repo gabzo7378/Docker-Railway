@@ -66,7 +66,6 @@ const AdminCourses = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Profesor</TableCell>
               <TableCell>Precio</TableCell>
@@ -76,7 +75,6 @@ const AdminCourses = () => {
           <TableBody>
             {courses.map((c) => (
               <TableRow key={c.id}>
-                <TableCell>{c.id}</TableCell>
                 <TableCell>{c.name}</TableCell>
                 <TableCell>{c.teacher_name || "—"}</TableCell>
                 <TableCell>

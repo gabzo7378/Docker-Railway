@@ -223,9 +223,8 @@ const AdminPackages = () => {
           if (!cycleId || co.cycle_id === cycleId) {
             flattened.push({
               id: co.id,
-              label: `${c.name} · ${co.group_label || "Grupo"}${
-                co.first_name ? " · " + co.first_name + " " + co.last_name : ""
-              }`,
+              label: `${c.name} · ${co.group_label || "Grupo"}${co.first_name ? " · " + co.first_name + " " + co.last_name : ""
+                }`,
             });
           }
         }
@@ -375,7 +374,6 @@ const AdminPackages = () => {
           <Table className="admin-table">
             <TableHead className="admin-table-head">
               <TableRow>
-                <TableCell className="admin-table-head-cell">ID</TableCell>
                 <TableCell className="admin-table-head-cell">Nombre</TableCell>
                 <TableCell className="admin-table-head-cell">
                   Precio base
@@ -391,7 +389,6 @@ const AdminPackages = () => {
             <TableBody>
               {getFilteredPackages().map((p) => (
                 <TableRow key={p.id} className="admin-table-row">
-                  <TableCell className="admin-table-cell">{p.id}</TableCell>
                   <TableCell className="admin-table-cell">
                     <Typography variant="subtitle2" fontWeight="bold">
                       {p.name}
@@ -461,7 +458,7 @@ const AdminPackages = () => {
               ))}
               {getFilteredPackages().length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                     <Typography color="text.secondary">
                       No se encontraron paquetes
                     </Typography>
@@ -479,7 +476,6 @@ const AdminPackages = () => {
             <Table className="admin-table">
               <TableHead className="admin-table-head">
                 <TableRow>
-                  <TableCell className="admin-table-head-cell">ID</TableCell>
                   <TableCell className="admin-table-head-cell">
                     Paquete
                   </TableCell>
@@ -495,7 +491,6 @@ const AdminPackages = () => {
               <TableBody>
                 {getFilteredOfferings().map((o) => (
                   <TableRow key={o.id} className="admin-table-row">
-                    <TableCell className="admin-table-cell">{o.id}</TableCell>
                     <TableCell className="admin-table-cell">
                       {o.package_name || "-"}
                     </TableCell>
@@ -526,7 +521,7 @@ const AdminPackages = () => {
                 ))}
                 {getFilteredOfferings().length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                       <Typography color="text.secondary">
                         No se encontraron ofertas de paquetes
                       </Typography>

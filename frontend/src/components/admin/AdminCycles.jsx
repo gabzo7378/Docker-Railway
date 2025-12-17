@@ -164,7 +164,6 @@ const AdminCycles = () => {
         <Table className="admin-table">
           <TableHead className="admin-table-head">
             <TableRow>
-              <TableCell className="admin-table-head-cell">ID</TableCell>
               <TableCell className="admin-table-head-cell">Nombre</TableCell>
               <TableCell className="admin-table-head-cell">Fecha Inicio</TableCell>
               <TableCell className="admin-table-head-cell">Fecha Fin</TableCell>
@@ -176,7 +175,6 @@ const AdminCycles = () => {
           <TableBody>
             {cycles.map((cycle) => (
               <TableRow key={cycle.id} className="admin-table-row">
-                <TableCell className="admin-table-cell">{cycle.id}</TableCell>
                 <TableCell className="admin-table-cell">{cycle.name}</TableCell>
                 <TableCell className="admin-table-cell">{new Date(cycle.start_date).toLocaleDateString()}</TableCell>
                 <TableCell className="admin-table-cell">{new Date(cycle.end_date).toLocaleDateString()}</TableCell>

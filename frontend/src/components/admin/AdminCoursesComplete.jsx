@@ -270,7 +270,6 @@ const AdminCoursesComplete = () => {
           <Table className="admin-table">
             <TableHead className="admin-table-head">
               <TableRow>
-                <TableCell className="admin-table-head-cell">ID</TableCell>
                 <TableCell className="admin-table-head-cell">Nombre</TableCell>
                 <TableCell className="admin-table-head-cell">Descripción</TableCell>
                 <TableCell className="admin-table-head-cell">Precio Base</TableCell>
@@ -280,7 +279,6 @@ const AdminCoursesComplete = () => {
             <TableBody>
               {getFilteredCourses().map((course) => (
                 <TableRow key={course.id} className="admin-table-row">
-                  <TableCell className="admin-table-cell">{course.id}</TableCell>
                   <TableCell className="admin-table-cell">
                     <Typography variant="subtitle2" fontWeight="bold">{course.name}</Typography>
                   </TableCell>
@@ -300,7 +298,7 @@ const AdminCoursesComplete = () => {
               ))}
               {getFilteredCourses().length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                     <Typography color="text.secondary">No se encontraron cursos</Typography>
                   </TableCell>
                 </TableRow>
@@ -327,7 +325,6 @@ const AdminCoursesComplete = () => {
             <Table className="admin-table">
               <TableHead className="admin-table-head">
                 <TableRow>
-                  <TableCell className="admin-table-head-cell">ID</TableCell>
                   <TableCell className="admin-table-head-cell">Curso</TableCell>
                   <TableCell className="admin-table-head-cell">Ciclo</TableCell>
                   <TableCell className="admin-table-head-cell">Grupo</TableCell>
@@ -340,7 +337,6 @@ const AdminCoursesComplete = () => {
               <TableBody>
                 {getFilteredOfferings().map((offering) => (
                   <TableRow key={offering.id} className="admin-table-row">
-                    <TableCell className="admin-table-cell">{offering.id}</TableCell>
                     <TableCell className="admin-table-cell">
                       <Chip label={offering.course_name} size="small" className="admin-chip default" />
                     </TableCell>
@@ -373,7 +369,7 @@ const AdminCoursesComplete = () => {
                 ))}
                 {getFilteredOfferings().length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
                       <Typography color="text.secondary">No se encontraron ofertas</Typography>
                     </TableCell>
                   </TableRow>
