@@ -235,6 +235,7 @@ const StudentDashboard = () => {
           <Box sx={{ mt: 2 }}>
             <input
               type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
               onChange={(e) => setVoucherFile(e.target.files[0])}
             />
           </Box>

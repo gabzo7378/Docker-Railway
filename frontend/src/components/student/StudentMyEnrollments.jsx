@@ -298,12 +298,12 @@ const StudentMyEnrollments = () => {
                     <Chip
                       label={getStatusLabel(enrollment.status)}
                       className={`student-badge ${enrollment.status === "aceptado"
-                          ? "approved"
-                          : enrollment.status === "pendiente"
-                            ? "pending"
-                            : enrollment.status === "rechazado"
-                              ? "rejected"
-                              : "default"
+                        ? "approved"
+                        : enrollment.status === "pendiente"
+                          ? "pending"
+                          : enrollment.status === "rechazado"
+                            ? "rejected"
+                            : "default"
                         }`}
                       size="small"
                     />
@@ -598,7 +598,7 @@ const StudentMyEnrollments = () => {
                     </Typography>
                     <TextField
                       type="file"
-                      inputProps={{ accept: "image/*,.pdf" }}
+                      inputProps={{ accept: "image/jpeg,image/jpg,image/png,image/gif,image/webp" }}
                       onChange={(e) => setVoucherFile(e.target.files[0])}
                       fullWidth
                     />
