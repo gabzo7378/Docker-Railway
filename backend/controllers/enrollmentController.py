@@ -243,6 +243,15 @@ async def cancel_enrollment(student_id: int, enrollment_id: int, db: asyncpg.Con
     return {"message": "Matrícula cancelada correctamente"}
 
 async def update_enrollment_status(data: EnrollmentStatusUpdate, db: asyncpg.Connection):
+    # Get enrollment details first
+    enrollment = await db.fetchrow(
+        "SELECT * FROM enrollments WHERE id = $1",
+        data.enrollment_id
+    )
+    
+    if not enrollment:
+        return {"error": "Matrícula no encontrada"}
+    
     # Check payment status if accepting
     if data.status == "aceptado":
         payment_check = await db.fetchrow(
@@ -258,10 +267,53 @@ async def update_enrollment_status(data: EnrollmentStatusUpdate, db: asyncpg.Con
         if not payment_check or payment_check['total_paid'] < payment_check['total_amount']:
             return {"error": "No se puede aceptar: pago no aprobado completamente"}
     
+    # Update enrollment status
     await db.execute(
         "UPDATE enrollments SET status = $1 WHERE id = $2",
         data.status, data.enrollment_id
     )
+    
+    # Auto-enroll in package courses if accepting a package enrollment
+    courses_enrolled = 0
+    if (data.status == "aceptado" and 
+        enrollment['enrollment_type'] == 'package' and 
+        enrollment['package_offering_id']):
+        
+        # Get all courses in this package offering
+        course_offerings = await db.fetch(
+            """SELECT course_offering_id 
+               FROM package_offering_courses 
+               WHERE package_offering_id = $1""",
+            enrollment['package_offering_id']
+        )
+        
+        # Create enrollment for each course
+        for co in course_offerings:
+            # Check if course enrollment already exists to avoid duplicates
+            existing_course_enr = await db.fetchrow(
+                """SELECT id FROM enrollments 
+                   WHERE student_id = $1 
+                   AND course_offering_id = $2 
+                   AND package_offering_id = $3""",
+                enrollment['student_id'],
+                co['course_offering_id'],
+                enrollment['package_offering_id']
+            )
+            
+            if not existing_course_enr:
+                await db.execute(
+                    """INSERT INTO enrollments 
+                       (student_id, course_offering_id, package_offering_id, 
+                        enrollment_type, status, registered_at)
+                       VALUES ($1, $2, $3, 'course', 'aceptado', CURRENT_TIMESTAMP)""",
+                    enrollment['student_id'],
+                    co['course_offering_id'],
+                    enrollment['package_offering_id']
+                )
+                courses_enrolled += 1
+    
+    if courses_enrolled > 0:
+        return {"message": f"Matrícula {data.status}. Estudiante automáticamente matriculado en {courses_enrolled} curso(s) del paquete."}
     
     return {"message": f"Matrícula {data.status}"}
 
