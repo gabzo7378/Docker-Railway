@@ -156,10 +156,8 @@ const AdminSchedules = () => {
       setFormData({
         course_offering_id: defaultCourse,
         day_of_week: preSelectedDay
-          ? viewMode === "list"
-            ? [preSelectedDay]
-            : preSelectedDay
-          : [],
+          ? (viewMode === "list" ? [preSelectedDay] : preSelectedDay)
+          : (viewMode === "list" ? [] : ""),
         start_time: preSelectedTime || "",
         end_time: preSelectedTime ? calculateEndTime(preSelectedTime) : "",
         classroom: "",
@@ -181,7 +179,7 @@ const AdminSchedules = () => {
     setEditingSchedule(null);
     setFormData({
       course_offering_id: "",
-      day_of_week: [],
+      day_of_week: viewMode === "list" ? [] : "",
       start_time: "",
       end_time: "",
       classroom: "",
@@ -334,16 +332,16 @@ const AdminSchedules = () => {
             >
               {filterType === "course"
                 ? offerings.map((o) => (
-                    <MenuItem key={o.id} value={o.id}>
-                      {o.course_name} - {o.group_label} ({o.cycle_name})
-                    </MenuItem>
-                  ))
+                  <MenuItem key={o.id} value={o.id}>
+                    {o.course_name} - {o.group_label} ({o.cycle_name})
+                  </MenuItem>
+                ))
                 : packageOfferings.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      <strong>{p.package_name}</strong> &nbsp; — {p.group_label}{" "}
-                      ({p.cycle_name})
-                    </MenuItem>
-                  ))}
+                  <MenuItem key={p.id} value={p.id}>
+                    <strong>{p.package_name}</strong> &nbsp; — {p.group_label}{" "}
+                    ({p.cycle_name})
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
 

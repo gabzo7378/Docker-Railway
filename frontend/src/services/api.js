@@ -266,6 +266,9 @@ export const paymentsAPI = {
 // API de horarios
 export const schedulesAPI = {
   getAll: () => request("/schedules"),
+  // Alias for backward compatibility with AdminSchedules component
+  getByOffering: (courseOfferingId) =>
+    request(`/schedules/offering/${courseOfferingId}`),
   getByCourseOffering: (courseOfferingId) =>
     request(`/schedules/offering/${courseOfferingId}`),
   getByPackageOffering: (packageOfferingId) =>
@@ -293,9 +296,8 @@ export const adminAPI = {
     const params = new URLSearchParams();
     if (cycleId) params.append("cycle_id", cycleId);
     if (studentId) params.append("student_id", studentId);
-    const url = `/admin/analytics${
-      params.toString() ? "?" + params.toString() : ""
-    }`;
+    const url = `/admin/analytics${params.toString() ? "?" + params.toString() : ""
+      }`;
     return request(url);
   },
   getNotifications: (studentId = null, type = null, limit = 50) => {
