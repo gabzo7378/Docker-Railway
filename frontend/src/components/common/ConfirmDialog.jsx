@@ -99,22 +99,24 @@ const ConfirmDialog = ({
                     px: 3,
                 }}
             >
-                <Button
-                    onClick={onClose}
-                    variant="outlined"
-                    sx={{
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: 4,
-                        borderWidth: 2,
-                        '&:hover': {
+                {cancelText && (
+                    <Button
+                        onClick={onClose}
+                        variant="outlined"
+                        sx={{
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            px: 4,
                             borderWidth: 2,
-                        },
-                    }}
-                >
-                    {cancelText}
-                </Button>
+                            '&:hover': {
+                                borderWidth: 2,
+                            },
+                        }}
+                    >
+                        {cancelText}
+                    </Button>
+                )}
                 <Button
                     onClick={handleConfirm}
                     variant="contained"
