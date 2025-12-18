@@ -84,7 +84,7 @@ async def reset_teacher_password(teacher_id: int, db: asyncpg.Connection):
 
 async def get_teacher_students(teacher_id: int, db: asyncpg.Connection):
     students = await db.fetch(
-        """SELECT DISTINCT s.id, s.first_name, s.last_name, s.dni, s.phone
+        """SELECT DISTINCT s.id, s.first_name, s.last_name, s.dni, s.phone, s.parent_name, s.parent_phone
            FROM students s
            JOIN enrollments e ON s.id = e.student_id
            JOIN course_offerings co ON e.course_offering_id = co.id

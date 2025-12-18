@@ -72,6 +72,7 @@ const TeacherStudents = () => {
               <TableCell className="teacher-table-head-cell">Apellido</TableCell>
               <TableCell className="teacher-table-head-cell">Teléfono</TableCell>
               <TableCell className="teacher-table-head-cell">Apoderado</TableCell>
+              <TableCell className="teacher-table-head-cell">Teléfono Apoderado</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -90,6 +91,7 @@ const TeacherStudents = () => {
                 </TableCell>
                 <TableCell className="teacher-table-cell">{student.phone || '-'}</TableCell>
                 <TableCell className="teacher-table-cell">{student.parent_name || '-'}</TableCell>
+                <TableCell className="teacher-table-cell">{student.parent_phone || '-'}</TableCell>
               </TableRow>
             ))}
           </TableBody>
