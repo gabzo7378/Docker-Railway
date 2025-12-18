@@ -87,8 +87,11 @@ async def get_teacher_students(teacher_id: int, db: asyncpg.Connection):
         """SELECT DISTINCT s.id, s.first_name, s.last_name, s.dni, s.phone, s.parent_name, s.parent_phone
            FROM students s
            JOIN enrollments e ON s.id = e.student_id
-           JOIN course_offerings co ON e.course_offering_id = co.id
-           WHERE co.teacher_id = $1 AND e.status = 'aceptado'
+           LEFT JOIN course_offerings co ON e.course_offering_id = co.id
+           LEFT JOIN package_offerings po ON e.package_offering_id = po.id
+           LEFT JOIN package_offering_courses poc ON po.id = poc.package_offering_id
+           LEFT JOIN course_offerings co2 ON poc.course_offering_id = co2.id
+           WHERE (co.teacher_id = $1 OR co2.teacher_id = $1) AND e.status = 'aceptado'
            ORDER BY s.last_name, s.first_name""",
         teacher_id
     )
