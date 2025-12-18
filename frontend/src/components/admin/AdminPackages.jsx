@@ -31,6 +31,8 @@ import {
 import { packagesAPI, cyclesAPI, coursesAPI } from "../../services/api";
 import { Checkbox, ListItemText } from "@mui/material";
 import { MenuItem } from "@mui/material";
+import { useDialog } from '../../hooks/useDialog';
+import DialogWrapper from '../common/DialogWrapper';
 import "./admin-dashboard.css";
 
 const AdminPackages = () => {
@@ -69,6 +71,9 @@ const AdminPackages = () => {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Dialog hook
+  const { confirmDialog, alertDialog, showConfirm, showAlert, closeConfirm, closeAlert } = useDialog();
 
   const fetchPackages = async () => {
     try {
@@ -125,12 +130,20 @@ const AdminPackages = () => {
   };
 
   const remove = async (id) => {
-    if (!confirm("¿Eliminar paquete?")) return;
+    const confirmed = await showConfirm({
+      title: '¿Eliminar paquete?',
+      message: 'Esta acción no se puede deshacer. El paquete será eliminado permanentemente.',
+      type: 'error',
+      confirmText: 'Eliminar'
+    });
+    if (!confirmed) return;
     try {
       await packagesAPI.delete(id);
       fetchPackages();
+      showAlert('Paquete eliminado exitosamente', 'success');
     } catch (err) {
       console.error(err);
+      showAlert(err.message || 'No se pudo eliminar el paquete', 'error');
     }
   };
 
@@ -201,12 +214,20 @@ const AdminPackages = () => {
   };
 
   const handleDeleteOffering = async (id) => {
-    if (!confirm("¿Eliminar oferta de paquete?")) return;
+    const confirmed = await showConfirm({
+      title: '¿Eliminar oferta de paquete?',
+      message: 'Esta acción no se puede deshacer. La oferta será eliminada permanentemente.',
+      type: 'error',
+      confirmText: 'Eliminar'
+    });
+    if (!confirmed) return;
     try {
       await packagesAPI.deleteOffering(id);
       await fetchOfferings();
+      showAlert('Oferta eliminada exitosamente', 'success');
     } catch (err) {
       console.error("Error deleting offering", err);
+      showAlert(err.message || 'No se pudo eliminar la oferta', 'error');
     }
   };
 
@@ -810,6 +831,13 @@ const AdminPackages = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <DialogWrapper
+        confirmDialog={confirmDialog}
+        alertDialog={alertDialog}
+        closeConfirm={closeConfirm}
+        closeAlert={closeAlert}
+      />
     </Box>
   );
 };

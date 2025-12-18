@@ -11,7 +11,7 @@ const DialogWrapper = ({ confirmDialog, promptDialog, alertDialog, closeConfirm,
                 <ConfirmDialog
                     open={confirmDialog.open}
                     onClose={closeConfirm}
-                    onConfirm={confirmDialog.onConfirm || closeConfirm}
+                    onConfirm={confirmDialog.onConfirm}
                     title={confirmDialog.title}
                     message={confirmDialog.message}
                     confirmText={confirmDialog.confirmText}
@@ -24,7 +24,7 @@ const DialogWrapper = ({ confirmDialog, promptDialog, alertDialog, closeConfirm,
                 <PromptDialog
                     open={promptDialog.open}
                     onClose={closePrompt}
-                    onConfirm={promptDialog.onConfirm || closePrompt}
+                    onConfirm={promptDialog.onConfirm}
                     title={promptDialog.title}
                     message={promptDialog.message}
                     label={promptDialog.label}

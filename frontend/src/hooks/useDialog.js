@@ -15,7 +15,8 @@ export const useDialog = () => {
         open: false,
         title: '',
         message: '',
-        label: '', defaultValue: '',
+        label: '',
+        defaultValue: '',
         placeholder: '',
         multiline: false,
         onConfirm: null,
@@ -37,8 +38,12 @@ export const useDialog = () => {
                 type: options.type || 'warning',
                 confirmText: options.confirmText || 'Aceptar',
                 onConfirm: () => {
-                    setConfirmDialog({ ...confirmDialog, open: false });
+                    setConfirmDialog(prev => ({ ...prev, open: false }));
                     resolve(true);
+                },
+                onCancel: () => {
+                    setConfirmDialog(prev => ({ ...prev, open: false }));
+                    resolve(false);
                 },
             });
         });
@@ -55,25 +60,32 @@ export const useDialog = () => {
                 placeholder: options.placeholder || '',
                 multiline: options.multiline || false,
                 onConfirm: (value) => {
-                    setPromptDialog({ ...promptDialog, open: false });
+                    setPromptDialog(prev => ({ ...prev, open: false }));
                     resolve(value);
                 },
             });
         });
     };
 
-    const showAlert = (message, type = 'info', title = '') => {
+    const showAlert = (message, type = 'info') => {
         setAlertDialog({
             open: true,
-            title: title || (type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : 'Información'),
+            title: type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : 'Información',
             message,
             type,
         });
     };
 
-    const closeConfirm = () => setConfirmDialog({ ...confirmDialog, open: false });
-    const closePrompt = () => setPromptDialog({ ...promptDialog, open: false });
-    const closeAlert = () => setAlertDialog({ ...alertDialog, open: false });
+    const closeConfirm = () => {
+        if (confirmDialog.onCancel) {
+            confirmDialog.onCancel();
+        } else {
+            setConfirmDialog(prev => ({ ...prev, open: false }));
+        }
+    };
+
+    const closePrompt = () => setPromptDialog(prev => ({ ...prev, open: false }));
+    const closeAlert = () => setAlertDialog(prev => ({ ...prev, open: false }));
 
     return {
         confirmDialog,
