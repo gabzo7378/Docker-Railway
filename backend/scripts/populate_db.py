@@ -143,6 +143,12 @@ async def main():
         teachers = []
         PHONES = ["969728039", "970253943", "984618002", "949850422", "950132313"]
         
+        # Import password hash function
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from utils.security import get_password_hash
+        
         for i in range(num_teachers):
             nombre = random.choice(NOMBRES)
             apellido = random.choice(APELLIDOS)
@@ -154,15 +160,29 @@ async def main():
             existing = await conn.fetchval("SELECT id FROM teachers WHERE dni = $1", dni)
             if existing:
                 continue
-                
+            
+            # 1. Crear usuario en users table (como create_teacher)
+            user_result = await conn.fetchrow(
+                """INSERT INTO users (username, password_hash, role, related_id)
+                   VALUES ($1, $2, 'teacher', NULL) RETURNING id""",
+                dni, get_password_hash(dni)
+            )
+            user_id = user_result['id']
+            
+            # 2. Crear teacher
             teacher = await conn.fetchrow(
                 """INSERT INTO teachers (first_name, last_name, dni, phone, email, specialization)
                    VALUES ($1, $2, $3, $4, $5, $6)
                    RETURNING id, first_name, last_name""",
                 nombre, apellido, dni, phone, email, random.choice(CURSOS_BASE)
             )
+            teacher_id = teacher['id']
+            
+            # 3. Actualizar users.related_id con teacher_id
+            await conn.execute("UPDATE users SET related_id = $1 WHERE id = $2", teacher_id, user_id)
+            
             teachers.append(teacher)
-            print(f"  ✓ {teacher['first_name']} {teacher['last_name']} (ID: {teacher['id']})")
+            print(f"  ✓ {teacher['first_name']} {teacher['last_name']} (ID: {teacher['id']}, User: {dni})")
         
         print(f"✅ {len(teachers)} docentes creados")
         
