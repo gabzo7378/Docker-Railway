@@ -141,12 +141,13 @@ async def main():
         num_teachers = random.randint(20, 30)
         print(f"\n👨‍🏫 Creando {num_teachers} docentes...")
         teachers = []
+        PHONES = ["969728039", "970253943", "984618002", "949850422", "950132313"]
         
         for i in range(num_teachers):
             nombre = random.choice(NOMBRES)
             apellido = random.choice(APELLIDOS)
             dni = f"{random.randint(10000000, 99999999)}"
-            phone = f"9{random.randint(10000000, 99999999)}"
+            phone = random.choice(PHONES)
             email = f"{nombre.lower()}.{apellido.lower()}@academia.edu.pe"
             
             # Verificar si ya existe el DNI
