@@ -7,13 +7,7 @@ import asyncpg
 import random
 from dotenv import load_dotenv
 import os
-import sys
-from pathlib import Path
-
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
-
-from utils.security import get_password_hash
+import bcrypt
 
 load_dotenv()
 
@@ -59,9 +53,9 @@ async def main():
             if existing:
                 continue
             
-            # Password hasheado (default: dni123)
-            password = f"123456"
-            password_hash = get_password_hash(password)
+            # Password hasheado (default: 123456)
+            password = "123456"
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             
             student = await conn.fetchrow(
                 """INSERT INTO students (dni, first_name, last_name, phone, parent_name, parent_phone, password_hash)
