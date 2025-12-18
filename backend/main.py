@@ -15,7 +15,8 @@ from routes import (
     enrollments,
     payments,
     packages,
-    admin
+    admin,
+    notifications
 )
 
 app = FastAPI(title="Academia API", version="2.0.0")
@@ -59,6 +60,7 @@ app.include_router(enrollments.router, prefix="/api")
 app.include_router(payments.router, prefix="/api")
 app.include_router(packages.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(notifications.router, prefix="/api")
 
 @app.on_event("startup")
 async def startup():

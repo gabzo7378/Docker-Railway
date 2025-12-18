@@ -309,6 +309,16 @@ export const adminAPI = {
   },
 };
 
+// API de notificaciones
+export const notificationsAPI = {
+  // WhatsApp session
+  initWhatsApp: () => request("/notifications/whatsapp/init", { method: "POST" }),
+  verifyWhatsApp: () => request("/notifications/whatsapp/verify", { method: "POST" }),
+  testWhatsApp: (phone = "969728039") =>
+    request(`/notifications/whatsapp/test?phone=${phone}`, { method: "POST" }),
+  closeWhatsApp: () => request("/notifications/whatsapp/close", { method: "POST" }),
+};
+
 export default {
   authAPI,
   studentsAPI,
@@ -320,4 +330,5 @@ export default {
   paymentsAPI,
   schedulesAPI,
   adminAPI,
+  notificationsAPI,
 };

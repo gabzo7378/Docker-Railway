@@ -29,6 +29,7 @@ import {
   Inventory as InventoryIcon,
   CalendarToday as CalendarIcon,
   ExitToApp as LogoutIcon,
+  Notifications as NotificationsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import './admin-layout.css';
@@ -46,6 +47,7 @@ const menuItems = [
   { text: 'Matrículas', icon: <AssignmentIcon />, path: '/admin/enrollments' },
   { text: 'Pagos', icon: <PaymentIcon />, path: '/admin/payments' },
   { text: 'Horarios', icon: <ScheduleIcon />, path: '/admin/schedules' },
+  { text: 'Notificaciones', icon: <NotificationsIcon />, path: '/admin/notifications' },
 ];
 
 const AdminLayout = () => {

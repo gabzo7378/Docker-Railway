@@ -4,3 +4,5 @@ uploads/
 __pycache__
 .venv/
 bd.txt
+
+services/notifications_whatsapp/screenshots/

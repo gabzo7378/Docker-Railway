@@ -28,6 +28,7 @@ import AdminStudents from './components/admin/AdminStudents';
 import AdminEnrollmentsComplete from './components/admin/AdminEnrollmentsComplete';
 import AdminPaymentsComplete from './components/admin/AdminPaymentsComplete';
 import AdminSchedules from './components/admin/AdminSchedules';
+import AdminNotifications from './components/admin/AdminNotifications';
 
 // Student Components
 import StudentDashboardComplete from './components/student/StudentDashboardComplete';
@@ -83,6 +84,7 @@ function App() {
               <Route path="enrollments" element={<AdminEnrollmentsComplete />} />
               <Route path="payments" element={<AdminPaymentsComplete />} />
               <Route path="schedules" element={<AdminSchedules />} />
+              <Route path="notifications" element={<AdminNotifications />} />
             </Route>
 
             {/* Student Routes */}
