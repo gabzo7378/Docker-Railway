@@ -4,32 +4,35 @@ from models.user import UserLogin
 from utils.security import get_password_hash, verify_password, create_access_token
 
 async def register_student(data: StudentCreate, db: asyncpg.Connection):
-    # Check if student exists
-    existing = await db.fetchrow("SELECT id FROM students WHERE dni = $1", data.dni)
-    if existing:
-        return {"error": "DNI registrado previamente, por favor ingrese otro"}
-    
-    password_hash = get_password_hash(data.password)
-    
-    result = await db.fetchrow(
-        """INSERT INTO students (dni, first_name, last_name, phone, parent_name, parent_phone, password_hash)
-           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id""",
-        data.dni, data.first_name, data.last_name, data.phone,
-        data.parent_name, data.parent_phone, password_hash
-    )
-    
-    token = create_access_token({"id": result['id'], "role": "student"})
-    
-    return {
-        "token": token,
-        "user": {
-            "id": result['id'],
-            "dni": data.dni,
-            "role": "student",
-            "first_name": data.first_name,
-            "last_name": data.last_name
+    try:
+        # Check if student exists
+        existing = await db.fetchrow("SELECT id FROM students WHERE dni = $1", data.dni)
+        if existing:
+            return {"error": "DNI registrado previamente, por favor ingrese otro"}
+        
+        password_hash = get_password_hash(data.password)
+        
+        result = await db.fetchrow(
+            """INSERT INTO students (dni, first_name, last_name, phone, parent_name, parent_phone, password_hash)
+               VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id""",
+            data.dni, data.first_name, data.last_name, data.phone,
+            data.parent_name, data.parent_phone, password_hash
+        )
+        
+        token = create_access_token({"id": result['id'], "role": "student"})
+        
+        return {
+            "token": token,
+            "user": {
+                "id": result['id'],
+                "dni": data.dni,
+                "role": "student",
+                "first_name": data.first_name,
+                "last_name": data.last_name
+            }
         }
-    }
+    except asyncpg.exceptions.UniqueViolationError:
+        return {"error": "DNI registrado previamente, por favor ingrese otro"}
 
 async def login_user(credentials: UserLogin, db: asyncpg.Connection):
     """Login - matches Node.js logic: check users table first, then students"""
@@ -41,7 +44,7 @@ async def login_user(credentials: UserLogin, db: asyncpg.Connection):
     
     if user:
         if not verify_password(credentials.password, user['password_hash']):
-            return {"error": "Contraseña incorrecta"}
+            return {"error": "DNI o contraseña incorrectos. Intenta de nuevo."}
         
         # Build user data
         user_data = {
@@ -71,10 +74,10 @@ async def login_user(credentials: UserLogin, db: asyncpg.Connection):
     )
     
     if not student:
-        return {"error": "DNI o contraseña incorrectos"}
+        return {"error": "No se encontró este DNI. Verifica el número o regístrate primero."}
     
     if not verify_password(credentials.password, student['password_hash']):
-        return {"error": "DNI o contraseña incorrectos"}
+        return {"error": "DNI o contraseña incorrectos. Intenta de nuevo."}
     
     token = create_access_token({"id": student['id'], "role": "student"})
     

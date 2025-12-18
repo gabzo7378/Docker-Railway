@@ -20,6 +20,11 @@ async def get_teacher_by_id(teacher_id: int, db: asyncpg.Connection):
 async def create_teacher(data: TeacherCreate, db: asyncpg.Connection):
     from utils.security import get_password_hash
     
+    # Check if DNI already exists
+    existing = await db.fetchrow("SELECT id FROM teachers WHERE dni = $1", data.dni)
+    if existing:
+        return {"error": "Este DNI ya se encuentra registrado"}
+    
     # Create user for teacher
     user_result = await db.fetchrow(
         """INSERT INTO users (username, password_hash, role, related_id)

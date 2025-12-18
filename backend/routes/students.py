@@ -12,6 +12,10 @@ async def register_student(student: StudentCreate, db: asyncpg.Connection = Depe
     from utils.security import create_access_token
     
     result = await studentController.create_student(student, db)
+    
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+        
     token = create_access_token({"id": result['id'], "role": "student"})
     
     return {

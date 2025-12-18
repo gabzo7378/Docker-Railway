@@ -26,8 +26,14 @@ async function request(endpoint, options = {}) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
     const data = await response.json();
 
+    // Check if backend returned an error field
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
     if (!response.ok) {
-      throw new Error(data.message || "Error en la petición");
+      // FastAPI HTTPException returns error in 'detail' field
+      throw new Error(data.detail || data.message || data.error || "Error en la petición");
     }
 
     return data;

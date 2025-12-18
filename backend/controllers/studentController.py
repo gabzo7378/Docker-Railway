@@ -14,14 +14,22 @@ async def get_student_by_id(student_id: int, db: asyncpg.Connection):
 async def create_student(data: StudentCreate, db: asyncpg.Connection):
     from utils.security import get_password_hash
     
-    password_hash = get_password_hash(data.password)
-    result = await db.fetchrow(
-        """INSERT INTO students (dni, first_name, last_name, phone, parent_name, parent_phone, password_hash)
-           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id""",
-        data.dni, data.first_name, data.last_name, data.phone,
-        data.parent_name, data.parent_phone, password_hash
-    )
-    return {"id": result['id'], "message": "Estudiante creado exitosamente"}
+    try:
+        # Check if DNI already exists
+        existing = await db.fetchrow("SELECT id FROM students WHERE dni = $1", data.dni)
+        if existing:
+            return {"error": "Este DNI ya se encuentra registrado"}
+
+        password_hash = get_password_hash(data.password)
+        result = await db.fetchrow(
+            """INSERT INTO students (dni, first_name, last_name, phone, parent_name, parent_phone, password_hash)
+               VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id""",
+            data.dni, data.first_name, data.last_name, data.phone,
+            data.parent_name, data.parent_phone, password_hash
+        )
+        return {"id": result['id'], "message": "Estudiante creado exitosamente"}
+    except asyncpg.exceptions.UniqueViolationError:
+        return {"error": "Este DNI ya se encuentra registrado"}
 
 async def update_student(student_id: int, data: StudentUpdate, db: asyncpg.Connection):
     fields = []
