@@ -33,7 +33,9 @@ async function request(endpoint, options = {}) {
 
     if (!response.ok) {
       // FastAPI HTTPException returns error in 'detail' field
-      throw new Error(data.detail || data.message || data.error || "Error en la petición");
+      throw new Error(
+        data.detail || data.message || data.error || "Error en la petición"
+      );
     }
 
     return data;
@@ -302,8 +304,9 @@ export const adminAPI = {
     const params = new URLSearchParams();
     if (cycleId) params.append("cycle_id", cycleId);
     if (studentId) params.append("student_id", studentId);
-    const url = `/admin/analytics${params.toString() ? "?" + params.toString() : ""
-      }`;
+    const url = `/admin/analytics${
+      params.toString() ? "?" + params.toString() : ""
+    }`;
     return request(url);
   },
   getNotifications: (studentId = null, type = null, limit = 50) => {
@@ -318,11 +321,23 @@ export const adminAPI = {
 // API de notificaciones
 export const notificationsAPI = {
   // WhatsApp session
-  initWhatsApp: () => request("/notifications/whatsapp/init", { method: "POST" }),
-  verifyWhatsApp: () => request("/notifications/whatsapp/verify", { method: "POST" }),
+  initWhatsApp: () =>
+    request("/notifications/whatsapp/init", { method: "POST" }),
+  verifyWhatsApp: () =>
+    request("/notifications/whatsapp/verify", { method: "POST" }),
   testWhatsApp: (phone = "969728039") =>
     request(`/notifications/whatsapp/test?phone=${phone}`, { method: "POST" }),
-  closeWhatsApp: () => request("/notifications/whatsapp/close", { method: "POST" }),
+  closeWhatsApp: () =>
+    request("/notifications/whatsapp/close", { method: "POST" }),
+
+  // Payment notifications
+  getPaymentsRejected: () => request("/notifications/payments/rejected"),
+  getPaymentsAccepted: () => request("/notifications/payments/accepted"),
+  sendPaymentNotifications: (type, payments) =>
+    request("/notifications/payments/send", {
+      method: "POST",
+      body: JSON.stringify({ type, payments }),
+    }),
 };
 
 export default {
