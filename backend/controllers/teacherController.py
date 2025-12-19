@@ -83,17 +83,63 @@ async def reset_teacher_password(teacher_id: int, db: asyncpg.Connection):
     return {"message": "Contraseña reseteada al DNI del docente"}
 
 async def get_teacher_students(teacher_id: int, db: asyncpg.Connection):
+    """Get all students enrolled in courses taught by this teacher (direct or via packages)"""
     students = await db.fetch(
-        """SELECT DISTINCT s.id, s.first_name, s.last_name, s.dni, s.phone, s.parent_name, s.parent_phone
+        """SELECT DISTINCT s.id, s.dni, s.first_name, s.last_name, s.phone,
+                  s.parent_name, s.parent_phone
            FROM students s
-           JOIN enrollments e ON s.id = e.student_id
-           LEFT JOIN course_offerings co ON e.course_offering_id = co.id
-           LEFT JOIN package_offerings po ON e.package_offering_id = po.id
-           LEFT JOIN package_offering_courses poc ON po.id = poc.package_offering_id
-           LEFT JOIN course_offerings co2 ON poc.course_offering_id = co2.id
-           WHERE (co.teacher_id = $1 OR co2.teacher_id = $1) AND e.status = 'aceptado'
+           WHERE s.id IN (
+               -- Students with direct course enrollment
+               SELECT e.student_id
+               FROM enrollments e
+               JOIN course_offerings co ON e.course_offering_id = co.id
+               WHERE co.teacher_id = $1 AND e.status = 'aceptado'
+               
+               UNION
+               
+               -- Students with package enrollment
+               SELECT e.student_id
+               FROM enrollments e
+               JOIN package_offering_courses poc ON e.package_offering_id = poc.package_offering_id
+               JOIN course_offerings co ON poc.course_offering_id = co.id
+               WHERE co.teacher_id = $1 AND e.status = 'aceptado'
+           )
            ORDER BY s.last_name, s.first_name""",
         teacher_id
+    )
+    return [dict(s) for s in students]
+
+async def get_students_by_course_offering(teacher_id: int, course_offering_id: int, db: asyncpg.Connection):
+    """Get students enrolled in a specific course offering (direct or via package)"""
+    # Verify teacher owns this course offering
+    offering = await db.fetchrow(
+        "SELECT teacher_id FROM course_offerings WHERE id = $1",
+        course_offering_id
+    )
+    
+    if not offering or offering['teacher_id'] != teacher_id:
+        return []
+    
+    students = await db.fetch(
+        """SELECT DISTINCT s.id, s.dni, s.first_name, s.last_name, s.phone,
+                  s.parent_name, s.parent_phone
+           FROM students s
+           WHERE s.id IN (
+               -- Students with direct course enrollment
+               SELECT e.student_id
+               FROM enrollments e
+               WHERE e.course_offering_id = $1 AND e.status = 'aceptado'
+               
+               UNION
+               
+               -- Students with package enrollment
+               SELECT e.student_id
+               FROM enrollments e
+               JOIN package_offering_courses poc ON e.package_offering_id = poc.package_offering_id
+               WHERE poc.course_offering_id = $1 AND e.status = 'aceptado'
+           )
+           ORDER BY s.last_name, s.first_name""",
+        course_offering_id
     )
     return [dict(s) for s in students]
 
@@ -119,18 +165,24 @@ async def mark_attendance(teacher_id: int, data: AttendanceCreate, db: asyncpg.C
         return {"error": "No tienes permiso para marcar asistencia en este curso"}
     
     # Verify student has accepted enrollment (direct or via package)
+    # First get the course_offering_id from the schedule
+    course_offering = await db.fetchrow(
+        """SELECT course_offering_id FROM schedules WHERE id = $1""",
+        data.schedule_id
+    )
+    
+    if not course_offering:
+        return {"error": "Horario no encontrado"}
+    
     enrollment_check = await db.fetchrow(
         """SELECT e.id
            FROM enrollments e
-           LEFT JOIN schedules s ON s.course_offering_id = e.course_offering_id
            LEFT JOIN package_offering_courses poc ON e.package_offering_id = poc.package_offering_id
-           LEFT JOIN course_offerings co ON poc.course_offering_id = co.id
-           LEFT JOIN schedules s2 ON co.id = s2.course_offering_id
-           WHERE (s.id = $1 OR s2.id = $1)
+           WHERE (e.course_offering_id = $1 OR poc.course_offering_id = $1)
              AND e.student_id = $2
              AND e.status = 'aceptado'
            LIMIT 1""",
-        data.schedule_id, data.student_id
+        course_offering['course_offering_id'], data.student_id
     )
     
     if not enrollment_check:

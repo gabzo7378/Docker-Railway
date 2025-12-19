@@ -41,6 +41,10 @@ async def reset_password(teacher_id: int, db: asyncpg.Connection = Depends(get_d
 async def get_teacher_students(teacher_id: int, db: asyncpg.Connection = Depends(get_db)):
     return await teacherController.get_teacher_students(teacher_id, db)
 
+@router.get("/{teacher_id}/students/course/{course_offering_id}", dependencies=[Depends(require_role(["teacher"]))])
+async def get_students_by_course(teacher_id: int, course_offering_id: int, db: asyncpg.Connection = Depends(get_db)):
+    return await teacherController.get_students_by_course_offering(teacher_id, course_offering_id, db)
+
 @router.post("/{teacher_id}/attendance", dependencies=[Depends(require_role(["teacher"]))])
 async def mark_attendance(
     teacher_id: int,

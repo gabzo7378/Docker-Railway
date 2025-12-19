@@ -68,13 +68,11 @@ const TeacherAttendance = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [studentsData, coursesData, cyclesData] = await Promise.all([
-        teachersAPI.getStudents(user.related_id),
+      const [coursesData, cyclesData] = await Promise.all([
         coursesAPI.getAll(),
         cyclesAPI.getAll(),
       ]);
 
-      setStudents(studentsData);
       setCycles(cyclesData);
       setCourses(coursesData);
 
@@ -140,9 +138,25 @@ const TeacherAttendance = () => {
     if (expandedSchedule === scheduleId) {
       setExpandedSchedule(null);
       setAttendanceData({});
+      setStudents([]);
     } else {
       setExpandedSchedule(scheduleId);
-      await loadAttendanceData(scheduleId, selectedDate.format('YYYY-MM-DD'));
+
+      // Load students for this specific course offering
+      const schedule = schedules.find(s => s.id === scheduleId);
+      if (schedule) {
+        try {
+          const courseStudents = await teachersAPI.getStudentsByCourse(
+            user.related_id,
+            schedule.course_offering_id
+          );
+          setStudents(courseStudents);
+          await loadAttendanceData(scheduleId, selectedDate.format('YYYY-MM-DD'));
+        } catch (err) {
+          console.error('Error loading students:', err);
+          setStudents([]);
+        }
+      }
     }
   };
 

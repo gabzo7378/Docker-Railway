@@ -207,6 +207,8 @@ export const teachersAPI = {
       method: "POST",
     }),
   getStudents: (id) => request(`/teachers/${id}/students`),
+  getStudentsByCourse: (teacherId, courseOfferingId) =>
+    request(`/teachers/${teacherId}/students/course/${courseOfferingId}`),
   markAttendance: (teacherId, data) =>
     request(`/teachers/${teacherId}/attendance`, {
       method: "POST",
