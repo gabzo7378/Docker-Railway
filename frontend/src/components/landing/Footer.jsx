@@ -15,7 +15,6 @@ const Footer = () => {
                     <h3>Enlaces Rápidos</h3>
                     <ul>
                         <li><Link to="/acerca-de">Acerca de</Link></li>
-                        <li><Link to="/nuestros-cursos">Nuestros Cursos</Link></li>
                         <li><Link to="/docentes">Docentes</Link></li>
                         <li><Link to="/testimonios">Testimonios</Link></li>
                     </ul>
@@ -37,12 +36,6 @@ const Footer = () => {
                         <li>📱 +51 938 865 416</li>
                         <li>📍 Lado Izquierdo Templo Sr. de Torrechayoc</li>
                     </ul>
-                    <div className="social-links">
-                        <a href="#facebook" aria-label="Facebook">📘</a>
-                        <a href="#instagram" aria-label="Instagram">📷</a>
-                        <a href="#youtube" aria-label="YouTube">📺</a>
-                        <a href="#tiktok" aria-label="TikTok">🎵</a>
-                    </div>
                 </div>
             </div>
 

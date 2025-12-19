@@ -143,40 +143,29 @@ const Login = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>📜 Normas Institucionales</h2>
+              <h2>⚖️ Términos y Protección de Datos</h2>
             </div>
             <div className="modal-body">
               <p>
-                ¡Bienvenido a la Academia Unión de Nuevos Inteligentes! Para
-                completar tu registro, por favor lee y acepta nuestros
-                compromisos:
+                ¡Bienvenido a la Academia Unión de Nuevos Inteligentes! Para completar tu registro, es necesario que aceptes nuestro compromiso mutuo:
               </p>
 
-              <h3>1. Asistencia y Puntualidad</h3>
+              <h3>1. Normas de Convivencia</h3>
               <ul>
-                <li>La tolerancia de ingreso es de 10 minutos.</li>
-                <li>
-                  La inasistencia injustificada será reportada al apoderado.
-                </li>
+                <li><strong>Asistencia:</strong> La tolerancia de ingreso es de 10 minutos. Inasistencias serán reportadas al apoderado.</li>
+                <li><strong>Respeto:</strong> Mantenemos un ambiente de respeto mutuo entre estudiantes y docentes.</li>
+                <li><strong>Compromiso:</strong> Cumplir con las evaluaciones y mantener el orden en las instalaciones.</li>
               </ul>
 
-              <h3>2. Conducta Académica</h3>
+              <h3>2. Protección de Datos (Ley N° 29733)</h3>
               <ul>
-                <li>Respeto mutuo entre estudiantes y docentes.</li>
-                <li>Uso adecuado de las instalaciones y plataforma virtual.</li>
+                <li><strong>Privacidad:</strong> Tus datos personales (DNI, nombre, teléfonos) serán tratados con absoluta confidencialidad y NO serán compartidos con terceros.</li>
+                <li><strong>Uso:</strong> Se utilizarán exclusivamente para gestión académica, control de asistencia y seguimiento de pagos.</li>
+                <li><strong>Consentimiento:</strong> Al registrarte, autorizas el envío de notificaciones importantes, alertas de asistencia y recordatorios de pago vía WhatsApp, SMS o llamadas.</li>
               </ul>
-
-              <h3>3. Compromiso</h3>
-              <ul>
-                <li>Cumplir con las evaluaciones y tareas asignadas.</li>
-                <li>Mantener el orden y limpieza en las aulas.</li>
-              </ul>
-              <ul>
-                <li>
-                  Al Matricularse usted esta aceptando estas normas y cualquier
-                  incumplimiento sera notificado al apoderado
-                </li>
-              </ul>
+              <p style={{ fontSize: '0.8rem', marginTop: '1rem', fontStyle: 'italic' }}>
+                Al registrarse, usted confirma que ha leído y acepta nuestra Política de Privacidad y Términos de Uso.
+              </p>
             </div>
             <div className="modal-footer">
               <button className="btn-accept" onClick={handleAcceptRules}>
@@ -266,7 +255,7 @@ const Login = () => {
                   {...registerFormik.getFieldProps("password")}
                   className={
                     registerFormik.touched.password &&
-                    registerFormik.errors.password
+                      registerFormik.errors.password
                       ? "input-error"
                       : ""
                   }
