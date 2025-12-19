@@ -14,21 +14,24 @@ import {
   TextField,
   MenuItem,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Alert,
   CircularProgress,
   Grid,
+  Collapse,
+  Checkbox,
+  IconButton,
 } from '@mui/material';
 import {
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  FilterList as FilterListIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import { teachersAPI, coursesAPI, cyclesAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import ConfirmDialog from '../common/ConfirmDialog';
 import './teacher-dashboard.css';
 
 const TeacherAttendance = () => {
@@ -37,25 +40,28 @@ const TeacherAttendance = () => {
   const [students, setStudents] = useState([]);
   const [cycles, setCycles] = useState([]);
   const [courses, setCourses] = useState([]);
-
-  // Filtros
   const [filterCycle, setFilterCycle] = useState('all');
   const [filterCourse, setFilterCourse] = useState('all');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-
-  const [selectedSchedule, setSelectedSchedule] = useState(null);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [attendanceStatus, setAttendanceStatus] = useState('presente');
-  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [expandedSchedule, setExpandedSchedule] = useState(null);
+  const [attendanceData, setAttendanceData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [errorDialog, setErrorDialog] = useState({ open: false, message: '' });
+  const [successDialog, setSuccessDialog] = useState({ open: false, message: '' });
 
   useEffect(() => {
     if (user?.related_id) {
       loadData();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (expandedSchedule && selectedDate) {
+      loadAttendanceData(expandedSchedule, selectedDate.format('YYYY-MM-DD'));
+    }
+  }, [selectedDate]);
 
   const loadData = async () => {
     try {
@@ -70,7 +76,6 @@ const TeacherAttendance = () => {
       setCycles(cyclesData);
       setCourses(coursesData);
 
-      // Obtener horarios de los cursos del profesor
       const allSchedules = [];
       for (const course of coursesData) {
         if (course.offerings) {
@@ -99,7 +104,6 @@ const TeacherAttendance = () => {
     }
   };
 
-  // Filtrado de horarios
   const filteredSchedules = useMemo(() => {
     return schedules.filter(s => {
       const matchCycle = filterCycle === 'all' || s.cycleId === parseInt(filterCycle);
@@ -108,31 +112,115 @@ const TeacherAttendance = () => {
     });
   }, [schedules, filterCycle, filterCourse]);
 
-  // Obtener estudiantes filtrados por el horario seleccionado
-  const filteredStudents = useMemo(() => {
-    if (!selectedSchedule) return [];
-    return students;
-  }, [students, selectedSchedule]);
+  const dateRange = useMemo(() => {
+    if (filterCycle === 'all') return { min: null, max: null };
+    const cycle = cycles.find(c => c.id === parseInt(filterCycle));
+    if (!cycle) return { min: null, max: null };
+    return {
+      min: dayjs(cycle.start_date),
+      max: dayjs(cycle.end_date)
+    };
+  }, [filterCycle, cycles]);
 
-  const handleMarkAttendance = async () => {
-    if (!selectedSchedule || !selectedStudent) {
-      setError('Selecciona un horario y un estudiante');
+  const handleToggleSchedule = async (scheduleId) => {
+    // Require cycle filter
+    if (filterCycle === 'all') {
+      setErrorDialog({
+        open: true,
+        message: 'Debes seleccionar un ciclo específico antes de marcar asistencia'
+      });
+      return;
+    }
+
+    if (expandedSchedule === scheduleId) {
+      setExpandedSchedule(null);
+      setAttendanceData({});
+    } else {
+      setExpandedSchedule(scheduleId);
+      await loadAttendanceData(scheduleId, selectedDate.format('YYYY-MM-DD'));
+    }
+  };
+
+  const loadAttendanceData = async (scheduleId, date) => {
+    try {
+      const records = await teachersAPI.getAttendance(user.related_id, scheduleId, date);
+      const data = {};
+      students.forEach(s => {
+        const record = records.find(r => r.student_id === s.id);
+        data[s.id] = record ? record.status === 'presente' : true;
+      });
+      setAttendanceData(data);
+    } catch (err) {
+      // If no records, initialize all as present
+      const initial = {};
+      students.forEach(s => { initial[s.id] = true; });
+      setAttendanceData(initial);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const all = {};
+    students.forEach(s => { all[s.id] = true; });
+    setAttendanceData(all);
+  };
+
+  const handleSelectNone = () => {
+    const none = {};
+    students.forEach(s => { none[s.id] = false; });
+    setAttendanceData(none);
+  };
+
+  const handleSaveAttendance = async (scheduleId) => {
+    const schedule = schedules.find(s => s.id === scheduleId);
+    if (!schedule) return;
+
+    // Validate weekday matches schedule
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const selectedDayName = dayNames[selectedDate.day()];
+
+    if (selectedDayName !== schedule.day_of_week) {
+      setErrorDialog({
+        open: true,
+        message: `La fecha seleccionada es ${selectedDayName}, pero este horario es para ${schedule.day_of_week}`
+      });
+      return;
+    }
+
+    // Validate date is within cycle range
+    if (dateRange.min && selectedDate.isBefore(dateRange.min)) {
+      setErrorDialog({
+        open: true,
+        message: 'La fecha está fuera del rango del ciclo'
+      });
+      return;
+    }
+    if (dateRange.max && selectedDate.isAfter(dateRange.max)) {
+      setErrorDialog({
+        open: true,
+        message: 'La fecha está fuera del rango del ciclo'
+      });
       return;
     }
 
     try {
       setError('');
-      await teachersAPI.markAttendance(user.related_id, {
-        schedule_id: selectedSchedule.id,
-        student_id: selectedStudent,
-        status: attendanceStatus,
-        date: selectedDate, // Nueva fecha seleccionada
+      const promises = students.map(student =>
+        teachersAPI.markAttendance(user.related_id, {
+          schedule_id: scheduleId,
+          student_id: student.id,
+          status: attendanceData[student.id] ? 'presente' : 'ausente',
+          date: selectedDate.format('YYYY-MM-DD'),
+        })
+      );
+      await Promise.all(promises);
+      setExpandedSchedule(null);
+      setAttendanceData({});
+      setSuccessDialog({
+        open: true,
+        message: `Asistencia guardada correctamente para ${students.length} estudiantes`
       });
-      setSuccess('Asistencia marcada correctamente para el ' + selectedDate);
-      setOpenDialog(false);
-      setSelectedStudent(null);
     } catch (err) {
-      setError(err.message || 'Error al marcar asistencia');
+      setError(err.message || 'Error al guardar asistencia');
     }
   };
 
@@ -162,7 +250,6 @@ const TeacherAttendance = () => {
         </Alert>
       )}
 
-      {/* Filtros */}
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={3}>
@@ -196,25 +283,25 @@ const TeacherAttendance = () => {
             </TextField>
           </Grid>
           <Grid item xs={12} md={3}>
-            <TextField
-              type="date"
-              fullWidth
-              label="Fecha de Asistencia"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<FilterListIcon />}
-              onClick={() => { setFilterCycle('all'); setFilterCourse('all'); }}
-            >
-              Limpiar Filtros
-            </Button>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Fecha de Asistencia"
+                value={selectedDate}
+                onChange={(newValue) => {
+                  if (newValue) {
+                    setSelectedDate(newValue);
+                  }
+                }}
+                minDate={dateRange.min}
+                maxDate={dateRange.max}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </LocalizationProvider>
           </Grid>
         </Grid>
       </Paper>
@@ -235,40 +322,100 @@ const TeacherAttendance = () => {
           </TableHead>
           <TableBody>
             {filteredSchedules.map((schedule) => (
-              <TableRow key={schedule.id} className="teacher-table-row">
-                <TableCell className="teacher-table-cell">
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {schedule.courseName}
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    Grupo: {schedule.groupLabel || 'A'}
-                  </Typography>
-                </TableCell>
-                <TableCell className="teacher-table-cell">
-                  {cycles.find(c => c.id === schedule.cycleId)?.name || 'N/A'}
-                </TableCell>
-                <TableCell className="teacher-table-cell">
-                  <Chip
-                    label={`${schedule.day_of_week}: ${schedule.start_time} - ${schedule.end_time}`}
-                    size="small"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell className="teacher-table-cell">{schedule.classroom || '-'}</TableCell>
-                <TableCell className="teacher-table-cell">
-                  <Button
-                    size="small"
-                    variant="contained"
-                    className="teacher-button teacher-button-primary"
-                    onClick={() => {
-                      setSelectedSchedule(schedule);
-                      setOpenDialog(true);
-                    }}
-                  >
-                    Tomar Asistencia
-                  </Button>
-                </TableCell>
-              </TableRow>
+              <React.Fragment key={schedule.id}>
+                <TableRow className="teacher-table-row">
+                  <TableCell className="teacher-table-cell">
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {schedule.courseName}
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      Grupo: {schedule.groupLabel || 'A'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell className="teacher-table-cell">
+                    {cycles.find(c => c.id === schedule.cycleId)?.name || 'N/A'}
+                  </TableCell>
+                  <TableCell className="teacher-table-cell">
+                    <Chip
+                      label={`${schedule.day_of_week}: ${schedule.start_time} - ${schedule.end_time}`}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell className="teacher-table-cell">{schedule.classroom || '-'}</TableCell>
+                  <TableCell className="teacher-table-cell">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleToggleSchedule(schedule.id)}
+                    >
+                      {expandedSchedule === schedule.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} sx={{ p: 0, border: 0 }}>
+                    <Collapse in={expandedSchedule === schedule.id} timeout="auto" unmountOnExit>
+                      <Box sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="h6">
+                            Estudiantes - {selectedDate.format('DD/MM/YYYY')}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button size="small" variant="outlined" onClick={handleSelectAll}>
+                              Marcar Todos
+                            </Button>
+                            <Button size="small" variant="outlined" onClick={handleSelectNone}>
+                              Desmarcar Todos
+                            </Button>
+                          </Box>
+                        </Box>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>DNI</TableCell>
+                              <TableCell>Estudiante</TableCell>
+                              <TableCell>Teléfono</TableCell>
+                              <TableCell>Apoderado</TableCell>
+                              <TableCell>Tel. Apoderado</TableCell>
+                              <TableCell align="center">Presente</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {students.map(student => (
+                              <TableRow key={student.id}>
+                                <TableCell>{student.dni}</TableCell>
+                                <TableCell>{student.first_name} {student.last_name}</TableCell>
+                                <TableCell>{student.phone || '-'}</TableCell>
+                                <TableCell>{student.parent_name || '-'}</TableCell>
+                                <TableCell>{student.parent_phone || '-'}</TableCell>
+                                <TableCell align="center">
+                                  <Checkbox
+                                    checked={attendanceData[student.id] || false}
+                                    onChange={(e) => setAttendanceData({
+                                      ...attendanceData,
+                                      [student.id]: e.target.checked
+                                    })}
+                                    color="success"
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => handleSaveAttendance(schedule.id)}
+                          >
+                            Guardar Asistencias
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Collapse>
+                  </TableCell>
+                </TableRow>
+              </React.Fragment>
             ))}
           </TableBody>
         </Table>
@@ -281,79 +428,29 @@ const TeacherAttendance = () => {
         )}
       </TableContainer>
 
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        className="teacher-dialog"
-      >
-        <DialogTitle>Marcar Asistencia - {selectedDate}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
-            {selectedSchedule && (
-              <Alert severity="info" sx={{ mb: 1 }}>
-                Registrando para: <strong>{selectedSchedule.courseName}</strong> ({selectedSchedule.day_of_week})
-              </Alert>
-            )}
+      <ConfirmDialog
+        open={errorDialog.open}
+        onClose={() => setErrorDialog({ open: false, message: '' })}
+        onConfirm={() => setErrorDialog({ open: false, message: '' })}
+        title="Error de Validación"
+        message={errorDialog.message}
+        type="error"
+        confirmText="Aceptar"
+        cancelText=""
+      />
 
-            <TextField
-              label="Seleccionar Estudiante"
-              select
-              fullWidth
-              value={selectedStudent || ''}
-              onChange={(e) => setSelectedStudent(e.target.value)}
-              className="teacher-input"
-            >
-              {filteredStudents.map((student) => (
-                <MenuItem key={student.id} value={student.id}>
-                  {student.last_name}, {student.first_name} ({student.dni})
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                fullWidth
-                variant={attendanceStatus === 'presente' ? 'contained' : 'outlined'}
-                color="success"
-                onClick={() => setAttendanceStatus('presente')}
-                startIcon={<CheckCircleIcon />}
-              >
-                Presente
-              </Button>
-              <Button
-                fullWidth
-                variant={attendanceStatus === 'ausente' ? 'contained' : 'outlined'}
-                color="error"
-                onClick={() => setAttendanceStatus('ausente')}
-                startIcon={<CancelIcon />}
-              >
-                Ausente
-              </Button>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => setOpenDialog(false)}
-            className="teacher-button teacher-button-secondary"
-          >
-            Cerrar
-          </Button>
-          <Button
-            onClick={handleMarkAttendance}
-            variant="contained"
-            className="teacher-button teacher-button-primary"
-            disabled={!selectedStudent}
-          >
-            Guardar Asistencia
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      <ConfirmDialog
+        open={successDialog.open}
+        onClose={() => setSuccessDialog({ open: false, message: '' })}
+        onConfirm={() => setSuccessDialog({ open: false, message: '' })}
+        title="Éxito"
+        message={successDialog.message}
+        type="success"
+        confirmText="Aceptar"
+        cancelText=""
+      />
+    </Box >
   );
 };
 
 export default TeacherAttendance;
-

@@ -99,7 +99,13 @@ async def get_teacher_students(teacher_id: int, db: asyncpg.Connection):
 
 async def mark_attendance(teacher_id: int, data: AttendanceCreate, db: asyncpg.Connection):
     """Mark attendance - matches Node.js logic with enrollment check and notifications"""
-    from datetime import date
+    from datetime import date, datetime
+    
+    # Convert string date to date object
+    if isinstance(data.date, str):
+        attendance_date = datetime.strptime(data.date, '%Y-%m-%d').date()
+    else:
+        attendance_date = data.date
     
     # Verify teacher owns this schedule
     schedule = await db.fetchrow(
@@ -112,14 +118,16 @@ async def mark_attendance(teacher_id: int, data: AttendanceCreate, db: asyncpg.C
     if not schedule or schedule['teacher_id'] != teacher_id:
         return {"error": "No tienes permiso para marcar asistencia en este curso"}
     
-    # Verify student has accepted enrollment in this course (like Node.js)
+    # Verify student has accepted enrollment (direct or via package)
     enrollment_check = await db.fetchrow(
         """SELECT e.id
            FROM enrollments e
-           JOIN schedules s ON s.course_offering_id = e.course_offering_id
-           WHERE s.id = $1
+           LEFT JOIN schedules s ON s.course_offering_id = e.course_offering_id
+           LEFT JOIN package_offering_courses poc ON e.package_offering_id = poc.package_offering_id
+           LEFT JOIN course_offerings co ON poc.course_offering_id = co.id
+           LEFT JOIN schedules s2 ON co.id = s2.course_offering_id
+           WHERE (s.id = $1 OR s2.id = $1)
              AND e.student_id = $2
-             AND e.enrollment_type = 'course'
              AND e.status = 'aceptado'
            LIMIT 1""",
         data.schedule_id, data.student_id
@@ -132,7 +140,7 @@ async def mark_attendance(teacher_id: int, data: AttendanceCreate, db: asyncpg.C
     existing = await db.fetchrow(
         """SELECT id FROM attendance 
            WHERE student_id = $1 AND schedule_id = $2 AND date = $3""",
-        data.student_id, data.schedule_id, data.date
+        data.student_id, data.schedule_id, attendance_date
     )
     
     if existing:
@@ -144,7 +152,7 @@ async def mark_attendance(teacher_id: int, data: AttendanceCreate, db: asyncpg.C
         await db.execute(
             """INSERT INTO attendance (student_id, schedule_id, date, status)
                VALUES ($1, $2, $3, $4)""",
-            data.student_id, data.schedule_id, data.date, data.status
+            data.student_id, data.schedule_id, attendance_date, data.status
         )
     
     # If absent, check total absences and notify parent if >= 3 (like Node.js)
@@ -174,3 +182,31 @@ async def mark_attendance(teacher_id: int, data: AttendanceCreate, db: asyncpg.C
                     print(f"Error enviando notificación: {notif_err}")
     
     return {"message": "Asistencia marcada correctamente"}
+
+async def get_attendance(teacher_id: int, schedule_id: int, date_str: str, db: asyncpg.Connection):
+    """Get attendance records for a schedule and date"""
+    from datetime import datetime
+    
+    # Convert string to date
+    attendance_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    
+    # Verify teacher owns this schedule
+    schedule = await db.fetchrow(
+        """SELECT co.teacher_id FROM schedules s
+           JOIN course_offerings co ON s.course_offering_id = co.id
+           WHERE s.id = $1""",
+        schedule_id
+    )
+    
+    if not schedule or schedule['teacher_id'] != teacher_id:
+        return {"error": "No tienes permiso para ver asistencia de este curso"}
+    
+    # Get attendance records
+    records = await db.fetch(
+        """SELECT student_id, status
+           FROM attendance
+           WHERE schedule_id = $1 AND date = $2""",
+        schedule_id, attendance_date
+    )
+    
+    return [{"student_id": r['student_id'], "status": r['status']} for r in records]

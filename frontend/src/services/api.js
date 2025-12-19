@@ -212,6 +212,8 @@ export const teachersAPI = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  getAttendance: (teacherId, scheduleId, date) =>
+    request(`/teachers/${teacherId}/attendance/${scheduleId}/${date}`),
 };
 
 // API de matrículas
@@ -304,9 +306,8 @@ export const adminAPI = {
     const params = new URLSearchParams();
     if (cycleId) params.append("cycle_id", cycleId);
     if (studentId) params.append("student_id", studentId);
-    const url = `/admin/analytics${
-      params.toString() ? "?" + params.toString() : ""
-    }`;
+    const url = `/admin/analytics${params.toString() ? "?" + params.toString() : ""
+      }`;
     return request(url);
   },
   getNotifications: (studentId = null, type = null, limit = 50) => {

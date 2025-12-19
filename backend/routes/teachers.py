@@ -54,3 +54,12 @@ async def mark_attendance(
     if not result:
         raise HTTPException(status_code=403, detail="No autorizado para este horario")
     return result
+
+@router.get("/{teacher_id}/attendance/{schedule_id}/{date}", dependencies=[Depends(require_role(["teacher"]))])
+async def get_attendance(
+    teacher_id: int,
+    schedule_id: int,
+    date: str,
+    db: asyncpg.Connection = Depends(get_db)
+):
+    return await teacherController.get_attendance(teacher_id, schedule_id, date, db)
