@@ -29,10 +29,14 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import 'dayjs/locale/es';
 import { teachersAPI, coursesAPI, cyclesAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import ConfirmDialog from '../common/ConfirmDialog';
 import './teacher-dashboard.css';
+
+// Configure dayjs to use Spanish locale
+dayjs.locale('es');
 
 const TeacherAttendance = () => {
   const { user } = useAuth();
@@ -46,8 +50,6 @@ const TeacherAttendance = () => {
   const [expandedSchedule, setExpandedSchedule] = useState(null);
   const [attendanceData, setAttendanceData] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [errorDialog, setErrorDialog] = useState({ open: false, message: '' });
   const [successDialog, setSuccessDialog] = useState({ open: false, message: '' });
 
@@ -98,7 +100,10 @@ const TeacherAttendance = () => {
       setSchedules(allSchedules);
     } catch (err) {
       console.error('Error cargando datos:', err);
-      setError('Error al cargar datos');
+      setErrorDialog({
+        open: true,
+        message: 'Error al cargar datos'
+      });
     } finally {
       setLoading(false);
     }
@@ -174,6 +179,16 @@ const TeacherAttendance = () => {
     const schedule = schedules.find(s => s.id === scheduleId);
     if (!schedule) return;
 
+    // Validate date is not in the future
+    const today = dayjs().endOf('day');
+    if (selectedDate.isAfter(today)) {
+      setErrorDialog({
+        open: true,
+        message: 'No puedes marcar asistencia para fechas futuras'
+      });
+      return;
+    }
+
     // Validate weekday matches schedule
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const selectedDayName = dayNames[selectedDate.day()];
@@ -203,7 +218,6 @@ const TeacherAttendance = () => {
     }
 
     try {
-      setError('');
       const promises = students.map(student =>
         teachersAPI.markAttendance(user.related_id, {
           schedule_id: scheduleId,
@@ -220,7 +234,10 @@ const TeacherAttendance = () => {
         message: `Asistencia guardada correctamente para ${students.length} estudiantes`
       });
     } catch (err) {
-      setError(err.message || 'Error al guardar asistencia');
+      setErrorDialog({
+        open: true,
+        message: err.message || 'Error al guardar asistencia'
+      });
     }
   };
 
@@ -237,18 +254,6 @@ const TeacherAttendance = () => {
       <Typography variant="h4" gutterBottom className="teacher-dashboard-title">
         Gestión de Asistencias
       </Typography>
-
-      {error && (
-        <Alert severity="error" className="teacher-alert" onClose={() => setError('')} sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" className="teacher-alert" onClose={() => setSuccess('')} sx={{ mb: 2 }}>
-          {success}
-        </Alert>
-      )}
 
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Grid container spacing={2} alignItems="center">
@@ -283,7 +288,7 @@ const TeacherAttendance = () => {
             </TextField>
           </Grid>
           <Grid item xs={12} md={3}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
               <DatePicker
                 label="Fecha de Asistencia"
                 value={selectedDate}
@@ -292,8 +297,9 @@ const TeacherAttendance = () => {
                     setSelectedDate(newValue);
                   }
                 }}
+                format="DD/MM/YYYY"
                 minDate={dateRange.min}
-                maxDate={dateRange.max}
+                maxDate={dateRange.max ? (dateRange.max.isBefore(dayjs()) ? dateRange.max : dayjs()) : dayjs()}
                 slotProps={{
                   textField: {
                     size: 'small',
