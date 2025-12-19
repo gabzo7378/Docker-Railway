@@ -7,18 +7,53 @@ import './LandingPage.css';
 const PageLayout = ({ title, children }) => (
     <Box className="landing-container">
         <Header />
-        <Box sx={{ pt: 15, pb: 8, minHeight: '80vh', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+        <Box sx={{
+            pt: 15,
+            pb: 8,
+            minHeight: '80vh',
+            background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
+            color: '#ffffff'
+        }}>
             <Container maxWidth="md">
-                <Paper elevation={3} sx={{ p: { xs: 3, md: 6 }, borderRadius: 4 }}>
-                    <Typography variant="h3" component="h1" gutterBottom color="primary" sx={{ fontWeight: 700 }}>
+                <Paper
+                    elevation={3}
+                    sx={{
+                        p: { xs: 3, md: 6 },
+                        borderRadius: 4,
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: '#ffffff'
+                    }}
+                >
+                    <Typography
+                        variant="h3"
+                        component="h1"
+                        gutterBottom
+                        sx={{
+                            fontWeight: 700,
+                            background: 'linear-gradient(90deg, #ffffff 0%, #a1a1a1 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                        }}
+                    >
                         {title}
                     </Typography>
-                    <Divider sx={{ mb: 4 }} />
-                    <Box className="info-content">
+                    <Divider sx={{ mb: 4, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                    <Box className="info-content" sx={{ '& p, & li': { color: '#e0e0e0' } }}>
                         {children}
                     </Box>
                     <Box sx={{ mt: 4, textAlign: 'center' }}>
-                        <Button component={Link} to="/" variant="contained" color="primary">
+                        <Button
+                            component={Link}
+                            to="/"
+                            variant="outlined"
+                            sx={{
+                                color: '#ffffff',
+                                borderColor: '#ffffff',
+                                '&:hover': { borderColor: '#a1a1a1', background: 'rgba(255, 255, 255, 0.05)' }
+                            }}
+                        >
                             Volver al Inicio
                         </Button>
                     </Box>

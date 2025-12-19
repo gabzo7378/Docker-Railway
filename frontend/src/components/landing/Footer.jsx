@@ -37,12 +37,6 @@ const Footer = () => {
                         <li>📱 +51 938 865 416</li>
                         <li>📍 Lado Izquierdo Templo Sr. de Torrechayoc</li>
                     </ul>
-                    <div className="social-links">
-                        <a href="#facebook" aria-label="Facebook">📘</a>
-                        <a href="#instagram" aria-label="Instagram">📷</a>
-                        <a href="#youtube" aria-label="YouTube">📺</a>
-                        <a href="#tiktok" aria-label="TikTok">🎵</a>
-                    </div>
                 </div>
             </div>
 
