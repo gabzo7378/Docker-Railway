@@ -82,11 +82,11 @@ const AdminDashboard = () => {
       ? dashboard
       : dashboard.filter((row) => row.cycle_id === selectedCycleId);
 
-  // Opciones de curso+grupo para pestaña de asistencia (solo cursos)
+  // Opciones de curso+grupo para pestaña de asistencia (todos los cursos)
   const courseOptions = Array.from(
     new Map(
       filteredDashboard
-        .filter((row) => row.enrollment_type === 'course')
+        .filter((row) => row.enrollment_status === 'aceptado') // Only accepted enrollments
         .map((row) => {
           const label = row.grupo
             ? `${row.enrolled_item} - Grupo ${row.grupo}`
@@ -462,8 +462,25 @@ const AdminDashboard = () => {
 
       {activeTab === 'attendance' && (
         <>
-          {/* Filtro por curso solo en pestaña de asistencia */}
-          <Box mb={2}>
+          {/* Filtros en pestaña de asistencia */}
+          <Box mb={2} display="flex" gap={2}>
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel id="cycle-filter-attendance-label">Ciclo</InputLabel>
+              <Select
+                labelId="cycle-filter-attendance-label"
+                value={selectedCycleId}
+                label="Ciclo"
+                onChange={(e) => setSelectedCycleId(e.target.value)}
+              >
+                <MenuItem value="all">Todos los ciclos</MenuItem>
+                {cycleOptions.map((cycle) => (
+                  <MenuItem key={cycle.id} value={cycle.id}>
+                    {cycle.name || `Ciclo ${cycle.id}`}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             <FormControl size="small" sx={{ minWidth: 220 }}>
               <InputLabel id="course-filter-label">Curso</InputLabel>
               <Select
@@ -495,13 +512,19 @@ const AdminDashboard = () => {
               </TableHead>
               <TableBody>
                 {filteredDashboard
-                  .filter((row) => row.enrollment_type === 'course')
                   .filter((row) => {
-                    if (selectedCourse === 'all') return true;
-                    const label = row.grupo
-                      ? `${row.enrolled_item} - Grupo ${row.grupo}`
-                      : row.enrolled_item;
-                    return label === selectedCourse;
+                    // Show all accepted enrollments (course or package)
+                    if (row.enrollment_status !== 'aceptado') return false;
+
+                    // Apply course filter if selected
+                    if (selectedCourse !== 'all') {
+                      const label = row.grupo
+                        ? `${row.enrolled_item} - Grupo ${row.grupo}`
+                        : row.enrolled_item;
+                      return label === selectedCourse;
+                    }
+
+                    return true;
                   })
                   .map((row) => (
                     <TableRow key={`${row.student_id}-${row.enrollment_id}`} className="admin-table-row">
@@ -567,7 +590,7 @@ const AdminDashboard = () => {
                   ))}
               </TableBody>
             </Table>
-            {filteredDashboard.length === 0 && (
+            {filteredDashboard.filter(row => row.enrollment_status === 'aceptado').length === 0 && (
               <Box p={3} textAlign="center">
                 <Typography color="textSecondary">No hay datos para mostrar</Typography>
               </Box>
