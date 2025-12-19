@@ -319,6 +319,19 @@ export const adminAPI = {
     params.append("limit", limit);
     return request(`/admin/notifications?${params.toString()}`);
   },
+  getAttendanceNotifications: (cycleId, date, group) => {
+    const params = new URLSearchParams({
+      cycle_id: cycleId,
+      date: date,
+      group: group,
+    });
+    return request(`/admin/attendance-notifications?${params.toString()}`);
+  },
+  sendAttendanceNotifications: (cycleId, date, groupLabel) =>
+    request("/admin/send-attendance-notifications", {
+      method: "POST",
+      body: JSON.stringify({ cycle_id: cycleId, date: date, group_label: groupLabel }),
+    }),
 };
 
 // API de notificaciones

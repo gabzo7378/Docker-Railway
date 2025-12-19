@@ -18,8 +18,18 @@ import {
   TableHead,
   TableRow,
   Paper,
+  TextField,
+  MenuItem,
+  Grid,
 } from "@mui/material";
-import { notificationsAPI } from "../../services/api";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/es';
+import { notificationsAPI, adminAPI, cyclesAPI } from "../../services/api";
+
+dayjs.locale('es');
 
 function TabPanel({ children, value, index }) {
   return (
@@ -44,6 +54,17 @@ export default function AdminNotifications() {
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [sendingNotifications, setSendingNotifications] = useState(false);
 
+  // Attendance notifications state
+  const [cycles, setCycles] = useState([]);
+  const [selectedCycle, setSelectedCycle] = useState('');
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [selectedGroup, setSelectedGroup] = useState('A'); // Default to group A
+  const [groups] = useState(['A', 'B', 'C', 'D']);
+  const [attendanceStudents, setAttendanceStudents] = useState([]);
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
+  const [sendingAttendance, setSendingAttendance] = useState(false);
+  const [dateRange, setDateRange] = useState({ min: null, max: null });
+
   // Auto-refresh QR every 60 seconds
   useEffect(() => {
     if (qrCode && !loggedIn) {
@@ -54,6 +75,37 @@ export default function AdminNotifications() {
       return () => clearTimeout(timer);
     }
   }, [qrCode, loggedIn, qrRefreshCount]);
+
+  // Load cycles on mount
+  useEffect(() => {
+    loadCycles();
+  }, []);
+
+  // Update date range when cycle changes
+  useEffect(() => {
+    if (selectedCycle) {
+      const cycle = cycles.find(c => c.id === parseInt(selectedCycle));
+      if (cycle) {
+        setDateRange({
+          min: dayjs(cycle.start_date),
+          max: dayjs(cycle.end_date).isBefore(dayjs()) ? dayjs(cycle.end_date) : dayjs()
+        });
+      }
+    }
+  }, [selectedCycle, cycles]);
+
+  const loadCycles = async () => {
+    try {
+      const data = await cyclesAPI.getAll();
+      setCycles(data);
+      // Auto-select first cycle if available
+      if (data.length > 0 && !selectedCycle) {
+        setSelectedCycle(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading cycles:', error);
+    }
+  };
 
   const handleRefreshQR = async () => {
     try {
@@ -238,6 +290,81 @@ export default function AdminNotifications() {
     }
   };
 
+  // Attendance notification handlers
+  const handleSearchAttendance = async () => {
+    if (!selectedCycle || !selectedDate || !selectedGroup) {
+      setMessage({ type: 'error', text: 'Debe seleccionar ciclo, fecha y grupo' });
+      return;
+    }
+
+    setLoadingAttendance(true);
+    setMessage(null);
+
+    try {
+      const data = await adminAPI.getAttendanceNotifications(
+        selectedCycle,
+        selectedDate.format('YYYY-MM-DD'),
+        selectedGroup
+      );
+      setAttendanceStudents(data);
+
+      if (data.length === 0) {
+        setMessage({ type: 'info', text: 'No se encontraron ausencias para los filtros seleccionados' });
+      } else {
+        setMessage({ type: 'success', text: `✓ ${data.length} estudiantes con ausencias encontrados` });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: `Error: ${error.message}` });
+      setAttendanceStudents([]);
+    } finally {
+      setLoadingAttendance(false);
+    }
+  };
+
+  const handleSendAttendanceNotifications = async () => {
+    if (!loggedIn) {
+      setMessage({ type: 'error', text: 'Debes iniciar sesión en WhatsApp primero' });
+      return;
+    }
+
+    const withPhone = attendanceStudents.filter(s => s.phone_to_use).length;
+    if (withPhone === 0) {
+      setMessage({ type: 'error', text: 'No hay estudiantes con teléfono para notificar' });
+      return;
+    }
+
+    const withoutPhone = attendanceStudents.length - withPhone;
+    const confirmMsg = `¿Enviar ${withPhone} notificaciones?${withoutPhone > 0 ? ` (${withoutPhone} sin teléfono serán omitidos)` : ''}`;
+
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
+    setSendingAttendance(true);
+    setMessage(null);
+
+    try {
+      const result = await adminAPI.sendAttendanceNotifications(
+        selectedCycle,
+        selectedDate.format('YYYY-MM-DD'),
+        selectedGroup
+      );
+
+      setMessage({
+        type: result.success > 0 ? 'success' : 'error',
+        text: `✓ ${result.success} enviados, ✗ ${result.errors} fallidos`
+      });
+
+      // Clear list after sending
+      setAttendanceStudents([]);
+      setSelectedGroup('');
+    } catch (error) {
+      setMessage({ type: 'error', text: `Error: ${error.message}` });
+    } finally {
+      setSendingAttendance(false);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
@@ -248,6 +375,7 @@ export default function AdminNotifications() {
         <Tab label="WhatsApp Login" />
         <Tab label="Pagos Rechazados" />
         <Tab label="Pagos Aceptados" />
+        <Tab label="Asistencias" />
       </Tabs>
 
       <TabPanel value={tabValue} index={0}>
@@ -511,6 +639,140 @@ export default function AdminNotifications() {
                   {sendingNotifications
                     ? "Enviando..."
                     : "Enviar Notificaciones"}
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              📅 Notificar Asistencias
+            </Typography>
+
+            {message && tabValue === 3 && (
+              <Alert severity={message.type} sx={{ mb: 2 }}>
+                {message.text}
+              </Alert>
+            )}
+
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Ciclo"
+                  value={selectedCycle}
+                  onChange={(e) => setSelectedCycle(e.target.value)}
+                  size="small"
+                >
+                  <MenuItem value="">-- Seleccione --</MenuItem>
+                  {cycles.map(c => (
+                    <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+                  <DatePicker
+                    label="Fecha"
+                    value={selectedDate}
+                    onChange={(newValue) => {
+                      if (newValue) {
+                        setSelectedDate(newValue);
+                      }
+                    }}
+                    format="DD/MM/YYYY"
+                    minDate={dateRange.min}
+                    maxDate={dateRange.max}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Grupo"
+                  value={selectedGroup}
+                  onChange={(e) => setSelectedGroup(e.target.value)}
+                  size="small"
+                >
+                  <MenuItem value="">-- Seleccione --</MenuItem>
+                  {groups.map(g => (
+                    <MenuItem key={g} value={g}>Grupo {g}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={handleSearchAttendance}
+                  disabled={loadingAttendance || sendingAttendance || !selectedCycle || !selectedDate || !selectedGroup}
+                  startIcon={loadingAttendance && <CircularProgress size={20} />}
+                >
+                  Buscar Ausencias
+                </Button>
+              </Grid>
+            </Grid>
+
+            {attendanceStudents.length > 0 && (
+              <>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  Total: {attendanceStudents.filter(s => s.phone_to_use).length} estudiantes recibirán notificación
+                  {attendanceStudents.filter(s => !s.phone_to_use).length > 0 &&
+                    `, ${attendanceStudents.filter(s => !s.phone_to_use).length} sin teléfono`
+                  }
+                </Typography>
+                <TableContainer component={Paper} sx={{ maxHeight: 400, mb: 2 }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>DNI</TableCell>
+                        <TableCell>Estudiante</TableCell>
+                        <TableCell>Teléfono</TableCell>
+                        <TableCell>Tipo</TableCell>
+                        <TableCell>Cursos Ausentes</TableCell>
+                        <TableCell>Cantidad</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {attendanceStudents.map(student => (
+                        <TableRow key={student.student_id}>
+                          <TableCell>{student.dni}</TableCell>
+                          <TableCell>{student.first_name} {student.last_name}</TableCell>
+                          <TableCell>{student.phone_to_use || 'Sin teléfono'}</TableCell>
+                          <TableCell>
+                            {student.phone_type === 'parent' ? 'Padre' :
+                              student.phone_type === 'student' ? 'Estudiante' : '-'}
+                          </TableCell>
+                          <TableCell>{student.absent_courses?.join(', ')}</TableCell>
+                          <TableCell>{student.absence_count}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSendAttendanceNotifications}
+                  disabled={!loggedIn || sendingAttendance || attendanceStudents.filter(s => s.phone_to_use).length === 0}
+                  startIcon={sendingAttendance && <CircularProgress size={20} />}
+                >
+                  {sendingAttendance ? 'Enviando...' : 'Enviar Notificaciones'}
                 </Button>
               </>
             )}

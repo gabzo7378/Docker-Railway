@@ -30,3 +30,24 @@ async def get_notifications(
 @router.get("/stats", dependencies=[Depends(require_role(["admin"]))])
 async def get_stats(db: asyncpg.Connection = Depends(get_db)):
     return await adminController.get_general_stats(db)
+
+@router.get("/attendance-notifications", dependencies=[Depends(require_role(["admin"]))])
+async def get_attendance_notifications(
+    cycle_id: int,
+    date: str,
+    group: str,
+    db: asyncpg.Connection = Depends(get_db)
+):
+    return await adminController.get_attendance_absences(cycle_id, date, group, db)
+
+@router.post("/send-attendance-notifications", dependencies=[Depends(require_role(["admin"]))])
+async def send_attendance_notifications(
+    data: dict,
+    db: asyncpg.Connection = Depends(get_db)
+):
+    return await adminController.send_attendance_notifications(
+        data['cycle_id'],
+        data['date'],
+        data['group_label'],
+        db
+    )

@@ -55,36 +55,116 @@ async def get_notifications(student_id: int, notification_type: str, limit: int,
     notifications = await db.fetch(sql, *params)
     return [dict(n) for n in notifications]
 
-async def get_analytics_old(cycle_id: int, db: asyncpg.Connection):
-    analytics = await db.fetch(
-        """SELECT 
-            cyc.id as cycle_id,
-            cyc.name as cycle_name,
-            COUNT(DISTINCT e.id) as total_enrollments,
-            COUNT(DISTINCT CASE WHEN e.status = 'aceptado' THEN e.id END) as accepted_enrollments,
-            COALESCE(SUM(pp.total_amount), 0) as total_debt,
-            COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.amount ELSE 0 END), 0) as total_paid,
-            COALESCE(SUM(pp.total_amount) - SUM(CASE WHEN i.status = 'paid' THEN i.amount ELSE 0 END), 0) as pending_amount,
-            COUNT(DISTINCT CASE WHEN a.status = 'presente' THEN a.id END) as total_attendance,
-            COUNT(DISTINCT CASE WHEN a.status = 'ausente' THEN a.id END) as total_absences,
-            CASE 
-                WHEN COUNT(DISTINCT CASE WHEN a.status = 'ausente' THEN a.id END) >= 3 THEN 'high'
-                WHEN COUNT(DISTINCT CASE WHEN a.status = 'ausente' THEN a.id END) > 0 THEN 'medium'
-                ELSE 'low'
-            END as absence_alert_level
-        FROM cycles cyc
-        LEFT JOIN course_offerings co ON co.cycle_id = cyc.id
-        LEFT JOIN package_offerings po ON po.cycle_id = cyc.id
-        LEFT JOIN enrollments e ON e.course_offering_id = co.id OR e.package_offering_id = po.id
-        LEFT JOIN payment_plans pp ON pp.enrollment_id = e.id
-        LEFT JOIN installments i ON i.payment_plan_id = pp.id
-        LEFT JOIN schedules sch ON sch.course_offering_id = co.id
-        LEFT JOIN attendance a ON a.schedule_id = sch.id AND a.student_id = e.student_id
-        WHERE cyc.id = $1
-        GROUP BY cyc.id, cyc.name""",
-        cycle_id
+async def get_attendance_absences(cycle_id: int, date_str: str, group_label: str, db: asyncpg.Connection):
+    """Get students with absences on specific date, cycle, and group"""
+    from datetime import datetime
+    
+    # Convert string to date
+    absence_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    
+    # Query to get students with absences, grouped by student
+    students = await db.fetch(
+        """SELECT DISTINCT ON (s.id)
+               s.id as student_id,
+               s.dni,
+               s.first_name,
+               s.last_name,
+               s.phone as student_phone,
+               s.parent_name,
+               s.parent_phone,
+               CASE 
+                   WHEN s.parent_phone IS NOT NULL THEN s.parent_phone
+                   WHEN s.phone IS NOT NULL THEN s.phone
+                   ELSE NULL
+               END as phone_to_use,
+               CASE 
+                   WHEN s.parent_phone IS NOT NULL THEN 'parent'
+                   WHEN s.phone IS NOT NULL THEN 'student'
+                   ELSE NULL
+               END as phone_type,
+               array_agg(DISTINCT c.name) as absent_courses,
+               COUNT(DISTINCT a.id) as absence_count
+           FROM attendance a
+           JOIN schedules sch ON a.schedule_id = sch.id
+           JOIN course_offerings co ON sch.course_offering_id = co.id
+           JOIN courses c ON co.course_id = c.id
+           JOIN students s ON a.student_id = s.id
+           WHERE a.date = $1
+             AND a.status = 'ausente'
+             AND co.cycle_id = $2
+             AND co.group_label = $3
+             AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)
+           GROUP BY s.id, s.dni, s.first_name, s.last_name, s.phone, s.parent_name, s.parent_phone
+           ORDER BY s.id, s.last_name, s.first_name""",
+        absence_date, cycle_id, group_label
     )
-    return [dict(a) for a in analytics]
+    
+    return [dict(s) for s in students]
+
+async def send_attendance_notifications(cycle_id: int, date_str: str, group_label: str, db: asyncpg.Connection):
+    """Send WhatsApp notifications to parents of students with absences"""
+    from datetime import datetime
+    from controllers import notificationController
+    
+    # Get students with absences
+    students = await get_attendance_absences(cycle_id, date_str, group_label, db)
+    
+    success_count = 0
+    error_count = 0
+    errors = []
+    
+    for student in students:
+        if not student['phone_to_use']:
+            error_count += 1
+            errors.append(f"{student['dni']} - Sin teléfono")
+            continue
+        
+        # Format courses list
+        courses_str = ", ".join(student['absent_courses'])
+        
+        # Create message
+        message = f"Su hijo/a {student['first_name']} {student['last_name']} estuvo ausente el {date_str} en: {courses_str}. Grupo {group_label}"
+        
+        try:
+            # Send WhatsApp message using notificationController
+            result = await notificationController.send_whatsapp_message(student['phone_to_use'], message)
+            
+            if result.get('status') == 'success':
+                # Log notification
+                await db.execute(
+                    """INSERT INTO notifications_log (student_id, parent_phone, type, message, status)
+                       VALUES ($1, $2, $3, $4, $5)""",
+                    student['student_id'],
+                    student['phone_to_use'],
+                    'absences_3',
+                    message,
+                    'sent'
+                )
+                success_count += 1
+            else:
+                raise Exception(result.get('message', 'Unknown error'))
+                
+        except Exception as e:
+            error_count += 1
+            errors.append(f"{student['dni']} - {str(e)}")
+            
+            # Log failed notification
+            await db.execute(
+                """INSERT INTO notifications_log (student_id, parent_phone, type, message, status)
+                   VALUES ($1, $2, $3, $4, $5)""",
+                student['student_id'],
+                student['phone_to_use'],
+                'absences_3',
+                message,
+                'failed'
+            )
+    
+    return {
+        "success": success_count,
+        "errors": error_count,
+        "error_details": errors,
+        "total": len(students)
+    }
 
 async def get_general_stats(db: asyncpg.Connection):
     stats = {}

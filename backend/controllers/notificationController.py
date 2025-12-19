@@ -67,6 +67,32 @@ async def close_whatsapp_session():
     
     return {"status": "closed"}
 
+async def send_whatsapp_message(phone: str, message: str):
+    """Send WhatsApp message to a phone number"""
+    global _driver
+    
+    if not _driver:
+        raise HTTPException(status_code=400, detail="No active WhatsApp session")
+    
+    try:
+        # Validate phone number
+        phone = phone.strip()
+        if not phone or len(phone) != 9 or not phone.startswith('9'):
+            return {
+                'status': 'error',
+                'message': 'Número de teléfono inválido'
+            }
+        
+        # Send message using sender module
+        result = send_message(_driver, phone, message)
+        return result
+        
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': str(e)
+        }
+
 async def get_rejected_payments(db):
     """Get list of rejected payments from last 30 days"""
     query = """
