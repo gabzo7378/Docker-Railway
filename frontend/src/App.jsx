@@ -6,7 +6,17 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Landing
+// Landing
 import LandingPage from './components/landing/LandingPage';
+import {
+  AboutPage,
+  CoursesPage,
+  TeachersPage,
+  TestimonialsPage,
+  TermsPage,
+  PrivacyPage,
+  CookiesPage
+} from './components/landing/InfoPages';
 
 // Auth
 import Login from './components/auth/Login';
@@ -115,6 +125,15 @@ function App() {
               <Route path="students" element={<TeacherStudents />} />
               <Route path="attendance" element={<TeacherAttendance />} />
             </Route>
+
+            {/* Info Pages */}
+            <Route path="/acerca-de" element={<AboutPage />} />
+            <Route path="/nuestros-cursos" element={<CoursesPage />} />
+            <Route path="/docentes" element={<TeachersPage />} />
+            <Route path="/testimonios" element={<TestimonialsPage />} />
+            <Route path="/terminos-y-condiciones" element={<TermsPage />} />
+            <Route path="/politica-de-privacidad" element={<PrivacyPage />} />
+            <Route path="/politica-de-cookies" element={<CookiesPage />} />
 
             {/* Landing Page */}
             <Route path="/" element={<LandingPage />} />

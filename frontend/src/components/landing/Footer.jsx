@@ -1,4 +1,5 @@
 // src/components/landing/Footer.jsx
+import { Link } from 'react-router-dom';
 import './LandingPage.css';
 
 const Footer = () => {
@@ -13,19 +14,19 @@ const Footer = () => {
                 <div className="footer-section">
                     <h3>Enlaces Rápidos</h3>
                     <ul>
-                        <li><a href="#about">Acerca de</a></li>
-                        <li><a href="#courses">Nuestros Cursos</a></li>
-                        <li><a href="#teachers">Docentes</a></li>
-                        <li><a href="#testimonials">Testimonios</a></li>
+                        <li><Link to="/acerca-de">Acerca de</Link></li>
+                        <li><Link to="/nuestros-cursos">Nuestros Cursos</Link></li>
+                        <li><Link to="/docentes">Docentes</Link></li>
+                        <li><Link to="/testimonios">Testimonios</Link></li>
                     </ul>
                 </div>
 
                 <div className="footer-section">
                     <h3>Legal</h3>
                     <ul>
-                        <li><a href="#terms">Términos y Condiciones</a></li>
-                        <li><a href="#privacy">Política de Privacidad</a></li>
-                        <li><a href="#cookies">Política de Cookies</a></li>
+                        <li><Link to="/terminos-y-condiciones">Términos y Condiciones</Link></li>
+                        <li><Link to="/politica-de-privacidad">Política de Privacidad</Link></li>
+                        <li><Link to="/politica-de-cookies">Política de Cookies</Link></li>
                     </ul>
                 </div>
 

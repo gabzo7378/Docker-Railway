@@ -132,7 +132,7 @@ async def mark_attendance(teacher_id: int, data: AttendanceCreate, db: asyncpg.C
     existing = await db.fetchrow(
         """SELECT id FROM attendance 
            WHERE student_id = $1 AND schedule_id = $2 AND date = $3""",
-        data.student_id, data.schedule_id, date.today()
+        data.student_id, data.schedule_id, data.date
     )
     
     if existing:
@@ -144,7 +144,7 @@ async def mark_attendance(teacher_id: int, data: AttendanceCreate, db: asyncpg.C
         await db.execute(
             """INSERT INTO attendance (student_id, schedule_id, date, status)
                VALUES ($1, $2, $3, $4)""",
-            data.student_id, data.schedule_id, date.today(), data.status
+            data.student_id, data.schedule_id, data.date, data.status
         )
     
     # If absent, check total absences and notify parent if >= 3 (like Node.js)

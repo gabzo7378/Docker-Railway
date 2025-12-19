@@ -30,3 +30,4 @@ class AttendanceCreate(BaseModel):
     schedule_id: int
     student_id: int
     status: str
+    date: str
